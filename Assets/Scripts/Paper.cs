@@ -182,11 +182,14 @@ public class Paper : MonoBehaviour
                         fi.CreateNewEdge();
                     }
 
-                    Debug.LogFormat("There are {0} involved faces", facesInvolved.Count);
                     // Finally, update the face information
+                    facesInvolved = facesInvolved.OrderByDescending(x => x.Height).ToList();
+                    int heightIncrease = 1;
                     for (int i = 0; i < facesInvolved.Count; i++)
                     {
+                        Debug.Log(facesInvolved[i].Height);
                         Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
+                        face.Height = facesInvolved[i].Height + heightIncrease;
                         for (int j = 0; j < verticesToMove.Count; j++)
                         {
                             if (facesInvolved[i].vertices.Contains(verticesToMove[j]))
@@ -205,6 +208,8 @@ public class Paper : MonoBehaviour
 
                         facesInvolved[i].UpdateEdges();
                         face.UpdateEdges();
+
+                        heightIncrease += 2;
                     }
 
                     break;
@@ -212,6 +217,11 @@ public class Paper : MonoBehaviour
             }
 
             yield return new WaitForEndOfFrame();
+        }
+
+        for (int i = 0; i < faces.Count; i++)
+        {
+            Debug.Log(faces[i].Height);
         }
 
         // Clean up everything
@@ -227,183 +237,6 @@ public class Paper : MonoBehaviour
         supportGhosts.Clear();
         Destroy(lineRenderer.gameObject);
     }
-
-    /*public IEnumerator PerformFold(Vertex v)
-    {
-        performingFold = true;
-
-        // We need to collect some information each frame, which we later use to calculate the result of the fold
-        List<Vertex> verticesToMove = new List<Vertex>() { v };
-        List<Face> facesInvolved = new List<Face>();
-        //List<FoldInformation> foldInfo = new List<FoldInformation>();
-        Dictionary<Face, List<FoldInformation>> foldInfo = new Dictionary<Face, List<FoldInformation>>();
-        List<GameObject> snappingGhosts = new List<GameObject>() { Instantiate(snappingGhostVertexPrefab, transform)};
-        List<GameObject> supportGhosts = new List<GameObject>();
-        List<Vertex> verticesOnFoldline = new List<Vertex>();
-        List<Edge> intersectedEdges = new List<Edge>();
-        List<Edge> outerEdges = new List<Edge>();
-
-
-        LineRenderer lineRenderer = new GameObject("LineRenderer", typeof(LineRenderer)).GetComponent<LineRenderer>();
-        lineRenderer.startWidth = 0.05f;
-        lineRenderer.endWidth = 0.05f;
-
-        while (true)
-        {
-            // Before doing anything else, we check whether the vertex can be moved in the direction the user attempted
-            bool moveIsLegal = true;// v.MoveIsLegal(movingVertex.transform.position);
-
-            if (moveIsLegal)
-            {
-                snappingGhosts[0].transform.position = Camera.main.ScreenToWorldPoint(Input.mousePosition) + Vector3.back * Camera.main.transform.position.z;
-
-                // Calculate where the foldLine is
-                //Linepiece foldLine = GetFoldLine(v.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition));
-                Linepiece foldLine = GetFoldLine(v.transform.position, snappingGhosts[0].GetComponent<GhostVertex>().GetPosition());
-                lineRenderer.SetPositions(new Vector3[] { foldLine.Start, foldLine.End });
-
-                // Find which vertices lie on the same side of the foldLine as v
-                // These, including v, are moving and will be mirrored in the foldLine
-                verticesToMove.Clear();
-                facesInvolved.Clear();
-                // Also find all faces that are involved with this fold
-                FindVerticesToMove(foldLine, v, ref verticesToMove);
-
-                // Save all vertices that intersect with the foldLine
-                // Edges that contain those are not eligible to form new vertices
-                verticesOnFoldline = GetVerticesOnFold(foldLine);
-
-                // Save all edges that intersect with the foldLine, as well as the position they intersect
-                // We want to create new vertices here when the fold is completed
-                foldInfo = GetIntersections(foldLine, verticesToMove, verticesOnFoldline, facesInvolved);
-
-                // For now, show all new positions of new and moved vertices using transparent 'Ghost' vertices
-                // Later replace this by live updating the paper (FANCY AF)
-                List<FoldInformation> ghostInfo = new List<FoldInformation>();
-                foreach(List<FoldInformation> list in foldInfo.Values)
-                {
-                    ghostInfo.AddRange(list);
-                }
-                //CreateGhosts(verticesToMove, foldInfo, ref snappingGhosts, ref supportGhosts, foldLine);
-                CreateGhosts(verticesToMove, ghostInfo, ref snappingGhosts, ref supportGhosts, foldLine);
-
-
-                // When the user completes the fold, create new vertices and edges
-                if (!performingFold)
-                {
-                    // Mirror existing vertices
-                    for (int i = 0; i < verticesToMove.Count; i++)
-                    {
-                        verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
-                    }
-
-                    // Create the new vertices
-                    List<Vertex> vertices = new List<Vertex>();
-                    vertices.AddRange(verticesOnFoldline);
-                    Debug.LogFormat("There are {0} foldinfo instances", foldInfo.Count);
-                    // Should there always be exactly 2 foldinfo instances per face (unless the whole face is folded over)?!
-                    // Because every face, if not folded over completely, is 'entered' once and 'left' once
-                    // If it is folded over completely, we don't really need to do anything with that particular face, just mirror the verticesToMove (see above)
-                    // It seems like it is possible that a face should make one new vertex, and that the other is contained on the foldline
-                    // Then this kinda breaks
-                    foreach(List<FoldInformation> fi in foldInfo.Values)
-                    {
-                        if (fi.Count != 0)
-                        {
-                            vertices.Add(fi[0].CreateNewVertex());
-                            vertices.Add(fi[1].CreateNewVertex());
-                        }
-                    }
-                    /*for (int i = 0; i < foldInfo.Count; i++)
-                    {
-                        vertices.Add(foldInfo[i].CreateNewVertex());
-                    }*/
-
-                    // Create new edges
-                    /*foreach(List<FoldInformation> fi in foldInfo.Values)
-                    {
-                        if (fi.Count != 0)
-                        {
-                            fi[0].CreateNewEdge();
-                            fi[1].CreateNewEdge();
-                        }
-                    }*/
-                    /*for (int i = 0; i < foldInfo.Count; i++)
-                    {
-                        foldInfo[i].CreateNewEdge();
-                    }*/
-
-                    // Specifically the edge that lies along the foldline
-                    // Maybe we could use the dictionary's information here more effectively, because we know it contains 2 entries, and those entries contain the NewVertex
-                    /*foreach(List<FoldInformation> fi in foldInfo.Values)
-                    {
-                        if (fi.Count != 0)
-                        {
-                            // Haven't yet checked whether this works with the whole 'don't make a new vertex, cuz the foldline intersects with one'-thingy
-                            List<Vertex> outerVertices = GetOuterVertices(foldLine, vertices, fi[0].face);
-                            new Edge(outerVertices[0], outerVertices[1]);
-                        }
-                    }*/
-                    /*List<Vertex> outerVertices = GetOuterVertices(foldLine, vertices);
-                    new Edge(outerVertices[0], outerVertices[1]);*/
-                    
-                    // Update existing edges with new information
-                    /*foreach(List<FoldInformation> fi in foldInfo.Values)
-                    {
-                        if (fi.Count != 0)
-                        {
-                            fi[0].UpdateExistingEdge();
-                            fi[1].UpdateExistingEdge();
-                        }
-                    }*/
-                    /*for (int i = 0; i < foldInfo.Count; i++)
-                    {
-                        foldInfo[i].UpdateExistingEdge();
-                    }*/
-                    //v.DetermineVertexState();
-
-                    // Create new faces and get them the relevant information somehow...
-                    /*for (int i = 0; i < facesInvolved.Count; i++)
-                    {
-                        Face newFace = Instantiate(facePrefab, transform).GetComponent<Face>();
-                        facesInvolved[i].AddVertex(outerVertices[0]);
-                        facesInvolved[i].AddVertex(outerVertices[1]);
-                        newFace.AddVertex(outerVertices[0]);
-                        newFace.AddVertex(outerVertices[1]);
-                        for (int j = 0; j < verticesToMove.Count; j++)
-                        {
-                            newFace.AddVertex(verticesToMove[j]);
-                            facesInvolved[i].RemoveVertex(verticesToMove[j]);
-                        }
-                        facesInvolved[i].UpdateEdges();
-                        newFace.UpdateEdges();
-                    }*/
-                    /*break;
-                }
-            }
-            else
-            {
-                if(!performingFold)
-                {
-                    break;
-                }
-            }
-            yield return new WaitForEndOfFrame();
-        }
-
-        // Clean up everything
-        for (int i = 0; i < snappingGhosts.Count; i++)
-        {
-            Destroy(snappingGhosts[i]);
-        }
-        snappingGhosts.Clear();
-        for (int i = 0; i < supportGhosts.Count; i++)
-        {
-            Destroy(supportGhosts[i]);
-        }
-        supportGhosts.Clear();
-        Destroy(lineRenderer.gameObject);
-    }*/
 
     public void EndFold()
     {
