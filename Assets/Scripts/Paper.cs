@@ -89,6 +89,7 @@ public class Paper : MonoBehaviour
         List<Vertex> verticesToMove = new List<Vertex>() { v };
         List<Face> facesInvolved = new List<Face>();
         Dictionary<Face, FoldInformation> foldInfo = new Dictionary<Face, FoldInformation>();
+        List<Vertex> verticesOnFold = new List<Vertex>();
         List<GameObject> snappingGhosts = new List<GameObject>() { Instantiate(snappingGhostVertexPrefab, transform) };
         List<GameObject> supportGhosts = new List<GameObject>();
 
@@ -110,6 +111,10 @@ public class Paper : MonoBehaviour
                 Linepiece foldLine = GetFoldLine(v.transform.position, snappingGhosts[0].GetComponent<GhostVertex>().GetPosition());
                 lineRenderer.SetPositions(new Vector3[] { foldLine.Start, foldLine.End });
 
+                // Find which vertices (roughly) lie on the foldline
+                // Those are also intersections, but do not require a new vertex
+                verticesOnFold = GetVerticesOnFold(foldLine);
+
                 // Find which vertices lie on the same side of the foldLine as v
                 // These, including v, are moving and will be mirrored in the foldLine
                 verticesToMove.Clear();
@@ -118,11 +123,13 @@ public class Paper : MonoBehaviour
                 // Find all the faces involved in the fold and where the intersections lie
                 facesInvolved.Clear();
                 foldInfo.Clear();
-                GetFoldInformation(foldLine, ref facesInvolved, ref foldInfo);
+                GetFoldInformation(foldLine, ref facesInvolved, ref foldInfo, verticesOnFold);
 
                 // Create ghost vertices to indicate where vertices will end up
                 CreateGhosts(foldLine, verticesToMove, foldInfo, ref snappingGhosts, ref supportGhosts);
 
+
+                // When the user releases the mouse button, calculate all the new stuff
                 if (!performingFold)
                 {
                     // Mirror existing vertices
@@ -138,7 +145,8 @@ public class Paper : MonoBehaviour
                     // If not, create one, if so, assign the already created vertex
                     foreach (FoldInformation fi in foldInfo.Values)
                     {
-                        if (fi.FaceIntersection0 != null)
+                        //if (fi.FaceIntersection0 != null)
+                        if (fi.FaceIntersection0.makeNewStuff)
                         {
                             if (!uniqueFaceIntersections.Any(x => x.e == fi.FaceIntersection0.e))
                             {
@@ -150,7 +158,8 @@ public class Paper : MonoBehaviour
                                 fi.FaceIntersection0.vertexAtIntersection = uniqueFaceIntersections.First(x => x.e == fi.FaceIntersection0.e).vertexAtIntersection;
                             }
                         }
-                        if (fi.FaceIntersection1 != null)
+                        //if (fi.FaceIntersection1 != null)
+                        if (fi.FaceIntersection1.makeNewStuff)
                         {
                             if (!uniqueFaceIntersections.Any(x => x.e == fi.FaceIntersection1.e))
                             {
@@ -169,12 +178,18 @@ public class Paper : MonoBehaviour
                     // Update the edge to be between the new vertex and the other (non-moved) vertex
                     for (int i = 0; i < uniqueFaceIntersections.Count; i++)
                     {
-                        uniqueFaceIntersections[i].CreateNewEdge(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x)));
+                        if (uniqueFaceIntersections[i].makeNewStuff)
+                        {
+                            uniqueFaceIntersections[i].CreateNewEdge(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x)));
+                        }
                     }
                     for (int i = 0; i < uniqueFaceIntersections.Count; i++)
                     {
-                        // unreadable as fuck
-                        uniqueFaceIntersections[i].UpdateExistingEdge(uniqueFaceIntersections[i].e.GetOther(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x))));
+                        if (uniqueFaceIntersections[i].makeNewStuff)
+                        {
+                            // unreadable as fuck
+                            uniqueFaceIntersections[i].UpdateExistingEdge(uniqueFaceIntersections[i].e.GetOther(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x))));
+                        }
                     }
                     // Create a new edge along the foldline for each face that was involved
                     foreach(FoldInformation fi in foldInfo.Values)
@@ -341,7 +356,7 @@ public class Paper : MonoBehaviour
     /// <param name="foldLine"></param>
     /// <param name="facesInvolved"></param>
     /// <param name="foldInfo"></param>
-    private void GetFoldInformation(Linepiece foldLine, ref List<Face> facesInvolved, ref Dictionary<Face, FoldInformation> foldInfo)
+    private void GetFoldInformation(Linepiece foldLine, ref List<Face> facesInvolved, ref Dictionary<Face, FoldInformation> foldInfo, List<Vertex> verticesOnFold)
     {
         for (int i = 0; i < faces.Count; i++)
         {
@@ -359,10 +374,31 @@ public class Paper : MonoBehaviour
                     {
                         foldInfo.Add(faces[i], fi);
                     }
-                    // Returns true if both intersections with the face have been found
-                    if (fi.NewFaceIntersection(faces[i].edges[j], intersection))
+                    // Check whether the fold goes through a vertex on the intersected edge
+                    // If so, no new vertex needs to be created, so send different info to the foldInformation instance
+                    Vertex vertexOnFold = null;
+                    for (int k = 0; k < verticesOnFold.Count; k++)
                     {
-                        break;
+                        if (faces[i].edges[j].HasVertex(verticesOnFold[k])) 
+                        {
+                            vertexOnFold = verticesOnFold[k];
+                            break;
+                        }
+                    }
+                    if (vertexOnFold == null)
+                    {
+                        // Returns true if both intersections with the face have been found
+                        if (fi.NewFaceIntersection(faces[i].edges[j], intersection))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (fi.NewFaceIntersection(vertexOnFold))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -382,8 +418,7 @@ public class Paper : MonoBehaviour
         }
         return result;
     }
-
-    //private List<FoldInformation> GetIntersections(Linepiece foldLine, List<Vertex> movingVertices, List<Vertex> verticesOnFold, List<Face> facesInvolved)
+    
     private Dictionary<Face, List<FoldInformation>> GetIntersections(Linepiece foldLine, List<Vertex> movingVertices, List<Vertex> verticesOnFold, List<Face> facesInvolved)
     {
         Dictionary<Face, List<FoldInformation>> foldInfo = new Dictionary<Face, List<FoldInformation>>();

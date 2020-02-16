@@ -4,14 +4,6 @@ using UnityEngine;
 
 public class FoldInformation
 {
-    /*public Vector2 intersection;
-    public Edge edge;
-    public Vertex movingVertex;
-    public Face face;
-
-    private Vertex other;
-    private Vertex newVertex;*/
-
     private FaceIntersection faceIntersection0 = null, faceIntersection1 = null;
     public FaceIntersection FaceIntersection0
     {
@@ -58,33 +50,32 @@ public class FoldInformation
         }
     }
 
+    public bool NewFaceIntersection(Vertex v)
+    {
+        if (faceIntersection0 == null)
+        {
+            faceIntersection0 = new FaceIntersection();
+            faceIntersection0.vertexAtIntersection = v;
+            faceIntersection0.makeNewStuff = false;
+            return false;
+        }
+        else if (faceIntersection1 == null)
+        {
+            faceIntersection1 = new FaceIntersection();
+            faceIntersection1.vertexAtIntersection = v;
+            faceIntersection1.makeNewStuff = false;
+            return true;
+        }
+        else
+        {
+            Debug.LogError("Tried to add a third faceIntersection instance to this FoldInformation!");
+            return false;
+        }
+    }
+
     public Edge CreateNewEdge()
     {
         newEdge = new Edge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection);
         return newEdge;
     }
-
-    /*public FoldInformation(Vector2 intersection, Edge edge, Vertex movingVertex)
-    {
-        this.intersection = intersection;
-        this.edge = edge;
-        this.movingVertex = movingVertex;
-    }
-
-    public Vertex CreateNewVertex()
-    {
-        newVertex = GameObject.Instantiate(Paper.Instance.VertexPrefab, intersection, Quaternion.identity, Paper.Instance.transform).GetComponent<Vertex>();
-        return newVertex;
-    }
-
-    public void CreateNewEdge()
-    {
-        other = edge.GetOther(movingVertex);
-        Edge e = new Edge(newVertex, movingVertex);
-    }
-
-    public void UpdateExistingEdge()
-    {
-        edge.UpdateEdge(other, newVertex);
-    }*/
 }

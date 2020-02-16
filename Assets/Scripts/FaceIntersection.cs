@@ -7,6 +7,7 @@ public class FaceIntersection
     public Edge e;
     public Vector2 intersection;
     public Vertex vertexAtIntersection;
+    public bool makeNewStuff = true;
 
     public FaceIntersection() { }
     
