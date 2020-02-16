@@ -117,13 +117,14 @@ public class Paper : MonoBehaviour
 
                 // Find which vertices lie on the same side of the foldLine as v
                 // These, including v, are moving and will be mirrored in the foldLine
-                verticesToMove.Clear();
-                FindVerticesToMove(foldLine, v, ref verticesToMove);
-
-                // Find all the faces involved in the fold and where the intersections lie
+                // Also record all faces that the movingVertices are a part of
                 facesInvolved.Clear();
+                verticesToMove.Clear();
+                FindVerticesToMove(foldLine, v, ref verticesToMove, ref facesInvolved);
+
+                // Find all intersections
                 foldInfo.Clear();
-                GetFoldInformation(foldLine, ref facesInvolved, ref foldInfo, verticesOnFold);
+                GetFoldInformation(foldLine, facesInvolved, ref foldInfo, verticesOnFold);
 
                 // Create ghost vertices to indicate where vertices will end up
                 CreateGhosts(foldLine, verticesToMove, foldInfo, ref snappingGhosts, ref supportGhosts);
@@ -316,7 +317,7 @@ public class Paper : MonoBehaviour
         return foldLine;
     }
 
-    private void FindVerticesToMove(Linepiece foldLine, Vertex movingVertex, ref List<Vertex> verticesToMove)
+    private void FindVerticesToMove(Linepiece foldLine, Vertex movingVertex, ref List<Vertex> verticesToMove, ref List<Face> facesInvolved)
     {
         // Make sure the movingVertex is added to the list
         if (!verticesToMove.Contains(movingVertex))
@@ -330,6 +331,11 @@ public class Paper : MonoBehaviour
             List<Vertex> vertices = faces[i].vertices;
             if (vertices.Contains(movingVertex))
             {
+                // Record all faces involved (a face is involved if it contains a moving vertex)
+                if (!facesInvolved.Contains(faces[i]))
+                {
+                    facesInvolved.Add(faces[i]);
+                }
                 for (int j = 0; j < vertices.Count; j++)
                 {
                     if (!verticesToMove.Contains(vertices[j]))
@@ -342,7 +348,7 @@ public class Paper : MonoBehaviour
                             verticesToMove.Add(vertices[j]);
                             // It might be that the original movingVertex is not part of a face that vertices[j] is a part of.
                             // If vertices[j] moves as well, we should check all its faces as well
-                            FindVerticesToMove(foldLine, vertices[j], ref verticesToMove);
+                            FindVerticesToMove(foldLine, vertices[j], ref verticesToMove, ref facesInvolved);
                         }
                     }
                 }
@@ -356,30 +362,26 @@ public class Paper : MonoBehaviour
     /// <param name="foldLine"></param>
     /// <param name="facesInvolved"></param>
     /// <param name="foldInfo"></param>
-    private void GetFoldInformation(Linepiece foldLine, ref List<Face> facesInvolved, ref Dictionary<Face, FoldInformation> foldInfo, List<Vertex> verticesOnFold)
+    private void GetFoldInformation(Linepiece foldLine, List<Face> facesInvolved, ref Dictionary<Face, FoldInformation> foldInfo, List<Vertex> verticesOnFold)
     {
-        for (int i = 0; i < faces.Count; i++)
+        for (int i = 0; i < facesInvolved.Count; i++)
         {
             FoldInformation fi = new FoldInformation();
-            for (int j = 0; j < faces[i].edges.Count; j++)
+            for (int j = 0; j < facesInvolved[i].edges.Count; j++)
             {
                 Vector2 intersection;
-                if (MathUtility.LinepiecesIntersect(foldLine, faces[i].edges[j].GetLinepiece(), out intersection))
+                if (MathUtility.LinepiecesIntersect(foldLine, facesInvolved[i].edges[j].GetLinepiece(), out intersection))
                 {
-                    if (!facesInvolved.Contains(faces[i]))
+                    if (!foldInfo.ContainsKey(facesInvolved[i]))
                     {
-                        facesInvolved.Add(faces[i]);
-                    }
-                    if (!foldInfo.ContainsKey(faces[i]))
-                    {
-                        foldInfo.Add(faces[i], fi);
+                        foldInfo.Add(facesInvolved[i], fi);
                     }
                     // Check whether the fold goes through a vertex on the intersected edge
                     // If so, no new vertex needs to be created, so send different info to the foldInformation instance
                     Vertex vertexOnFold = null;
                     for (int k = 0; k < verticesOnFold.Count; k++)
                     {
-                        if (faces[i].edges[j].HasVertex(verticesOnFold[k])) 
+                        if (facesInvolved[i].edges[j].HasVertex(verticesOnFold[k])) 
                         {
                             vertexOnFold = verticesOnFold[k];
                             break;
@@ -388,7 +390,7 @@ public class Paper : MonoBehaviour
                     if (vertexOnFold == null)
                     {
                         // Returns true if both intersections with the face have been found
-                        if (fi.NewFaceIntersection(faces[i].edges[j], intersection))
+                        if (fi.NewFaceIntersection(facesInvolved[i].edges[j], intersection))
                         {
                             break;
                         }
