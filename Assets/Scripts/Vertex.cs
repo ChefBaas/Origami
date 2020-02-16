@@ -168,6 +168,18 @@ public class Vertex : MonoBehaviour
         GetComponent<MeshRenderer>().material.color = color;
     }
 
+    public void MoveToFront()
+    {
+        Vector3 frontPosition = transform.position + Vector3.back;
+        transform.position = frontPosition;
+    }
+
+    public void MoveToBack()
+    {
+        Vector3 backPosition = transform.position + Vector3.forward;
+        transform.position = backPosition;
+    }
+
     private void OnMouseDown()
     {
         if (Paper.Instance.debugMode)

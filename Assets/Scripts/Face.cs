@@ -86,19 +86,23 @@ public class Face : MonoBehaviour
         for (int i = 0; i < vertices.Count; i++)
         {
             vertices[i].GiveColor(Color.red);
+            vertices[i].MoveToFront();
         }
         for (int i = 0; i < edges.Count; i++)
         {
             edges[i].GiveColor(Color.red);
+            edges[i].UpdateLineRenderer(null);
         }
         yield return new WaitForSeconds(1f);
         for (int i = 0; i < vertices.Count; i++)
         {
             vertices[i].GiveColor(Color.white);
+            vertices[i].MoveToBack();
         }
         for (int i = 0; i < edges.Count; i++)
         {
             edges[i].GiveColor(Color.white);
+            edges[i].UpdateLineRenderer(null);
         }
     }
 }
