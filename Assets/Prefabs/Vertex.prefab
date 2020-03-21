@@ -141,7 +141,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3601799049628198739}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -180,7 +180,7 @@ BoxCollider:
   m_GameObject: {fileID: 3601799049628198739}
   m_Material: {fileID: 0}
   m_IsTrigger: 1
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -196,6 +196,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cb3ba8d6f6f79441abda882afbf86f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  meshRenderer: {fileID: 3601799049628198742}
+  boxCollider: {fileID: 3601799049628198741}
   ghostVertexPrefab: {fileID: 3601799049628198739, guid: 83c0bfaeda2f99d41955e5c9544fca7e,
     type: 3}
   debugText: {fileID: 1403413663954695934}
