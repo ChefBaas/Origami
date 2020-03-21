@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Edge
+public class ModelEdge
 {
-    private Vertex v1, v2;
+    public ModelVertex v1, v2;
+
     private Linepiece linepiece;
     private LineRenderer lineRenderer;
     private TextMesh debugText;
@@ -13,7 +14,7 @@ public class Edge
 
     public int number;
 
-    public Edge(Vertex v1, Vertex v2)
+    public ModelEdge(ModelVertex v1, ModelVertex v2)
     {
         Debug.LogFormat("Creating new edge between {0} and {1}", v1.number, v2.number);
 
@@ -38,17 +39,18 @@ public class Edge
         UpdateLineRenderer(null);
         Hide();
 
-        lineObject.transform.position = (v1.transform.position + v2.transform.position) / 2f;
+        //lineObject.transform.position = (v1.transform.position + v2.transform.position) / 2f;
+        lineObject.transform.position = (v1.GetModelPosition() + v2.GetModelPosition()) / 2f;
 
         Paper.Instance.NewEdge(this, out number);
     }
 
-    ~Edge()
+    ~ModelEdge()
     {
         GameObject.Destroy(lineObject);
     }
 
-    public Vertex GetOther(Vertex v)
+    public ModelVertex GetOther(ModelVertex v)
     {
         if (v == v1)
         {
@@ -65,7 +67,7 @@ public class Edge
         }
     }
 
-    public bool HasVertex(Vertex v)
+    public bool HasVertex(ModelVertex v)
     {
         return v == v1 || v == v2;
     }
@@ -84,7 +86,14 @@ public class Edge
         debugText.gameObject.SetActive(false);
     }
 
-    public void UpdateLineRenderer(Vertex source)
+    public ViewEdge GetViewEdge()
+    {
+        ViewEdge viewEdge = new ViewEdge();
+
+        return viewEdge;
+    }
+
+    public void UpdateLineRenderer(ModelVertex source)
     {
         if (source != null)
         {
@@ -93,7 +102,7 @@ public class Edge
                 Debug.LogErrorFormat("Vertex with number {0} tried to update edge's renderer with number {1}", source.number, number);
             }
         }
-        lineRenderer.SetPositions(new Vector3[2] { v1.transform.position, v2.transform.position });
+        lineRenderer.SetPositions(new Vector3[2] { v1.GetModelPosition(), v2.GetModelPosition() });
         UpdateLinepiece();
     }
 
@@ -112,7 +121,7 @@ public class Edge
         debugText.text = string.Format("{0}={1}:{2}", number, v1.number, v2.number);
     }
 
-    public void UpdateEdge(Vertex v1, Vertex v2)
+    public void UpdateEdge(ModelVertex v1, ModelVertex v2)
     {
         Debug.LogFormat("Edge {0} contains vertices {1} and {2}, checking for {3} and {4}", number, this.v1.number, this.v2.number, v1.number, v2.number);
         if (v1 != this.v1 && v2 != this.v1)
@@ -129,10 +138,10 @@ public class Edge
         v2.AddEdge(this);
         
         UpdateLineRenderer(null);
-        lineObject.transform.position = (v1.transform.position + v2.transform.position) / 2f;
+        lineObject.transform.position = (v1.GetModelPosition() + v2.GetModelPosition()) / 2f;
     }
 
-    public bool IsMainVertex(Vertex v)
+    public bool IsMainVertex(ModelVertex v)
     {
         return v == v1;
     }
@@ -163,6 +172,6 @@ public class Edge
 
     private Linepiece CalculateLinepieceValues()
     {
-        return new Linepiece(v1.transform.position, v2.transform.position);
+        return new Linepiece(v1.GetModelPosition(), v2.GetModelPosition());
     }
 }

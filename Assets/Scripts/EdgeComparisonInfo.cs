@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class EdgeComparisonInfo
 {
-    public Edge e1;
-    public Edge e2;
+    public ModelEdge e1;
+    public ModelEdge e2;
     public float signedAngle = 0f;
 
     public EdgeComparisonInfo() { }

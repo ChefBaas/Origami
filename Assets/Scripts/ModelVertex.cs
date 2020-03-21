@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Vertex : MonoBehaviour
+public class ModelVertex
 {
-    [SerializeField] private MeshRenderer meshRenderer;
+    /*[SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private BoxCollider boxCollider;
     [SerializeField] private GameObject ghostVertexPrefab;
-    [SerializeField] private TextMesh debugText;
+    [SerializeField] private TextMesh debugText;*/
 
-    public List<Edge> edges = new List<Edge>();
-    public List<Face> faces = new List<Face>();
+    public List<ModelEdge> edges = new List<ModelEdge>();
+    public List<ModelFace> faces = new List<ModelFace>();
     private bool isOuterVertex = true;
     public bool IsOuterVertex
     {
@@ -22,31 +22,37 @@ public class Vertex : MonoBehaviour
         get => outerEdges;
     }*/
 
-    private Vector3 lastPosition;
+    /*private Vector3 lastPosition;
     private bool moving = false;
     private Coroutine fancyStuffCoroutine;
-    private bool visible = false;
+    private bool visible = false;*/
+
+    private ViewVertex viewVertex;
+    private Vector3 position;
 
     [HideInInspector]
     public int number = -1;
 
-    private void Awake()
+    public ModelVertex(Vector3 position)
     {
-        Hide();
-    }
+        this.position = position;
+        //Hide();
 
-    void Start()
-    {
-        lastPosition = transform.position;
+        viewVertex = new ViewVertex();
+        viewVertex.SetPosition(position);
+        viewVertex.OnStartDrag += OnStartFold;
+        viewVertex.OnStopDrag += OnStopFold;
+
+        //lastPosition = transform.position;
         Paper.Instance.NewVertex(this, out number);
-        debugText.text = number.ToString();
-        for (int i = 0; i < edges.Count; i++)
+        //debugText.text = number.ToString();
+        /*for (int i = 0; i < edges.Count; i++)
         {
             edges[i].UpdateText();
-        }
+        }*/
     }
     
-    void LateUpdate()
+    /*void LateUpdate()
     {
         if (lastPosition != transform.position && visible)
         {
@@ -56,19 +62,19 @@ public class Vertex : MonoBehaviour
             }
         }
         lastPosition = transform.position;
-    }
+    }*/
 
-    public List<Vertex> GetAllNeighbours()
+    /*public List<ModelVertex> GetAllNeighbours()
     {
-        List<Vertex> neighbours = new List<Vertex>();
+        List<ModelVertex> neighbours = new List<ModelVertex>();
         for (int i = 0; i < edges.Count; i++)
         {
             neighbours.Add(edges[i].GetOther(this));
         }
         return neighbours;
-    }
+    }*/
 
-    public void AddEdge(Edge e)
+    public void AddEdge(ModelEdge e)
     {
         if (!edges.Contains(e))
         {
@@ -76,7 +82,7 @@ public class Vertex : MonoBehaviour
         }
     }
 
-    public void RemoveEdge(Edge e)
+    public void RemoveEdge(ModelEdge e)
     {
         if (edges.Contains(e))
         {
@@ -84,7 +90,7 @@ public class Vertex : MonoBehaviour
         }
     }
 
-    public void AddFace(Face f)
+    public void AddFace(ModelFace f)
     {
         if (!faces.Contains(f))
         {
@@ -92,7 +98,7 @@ public class Vertex : MonoBehaviour
         }
     }
 
-    public void RemoveFace(Face f)
+    public void RemoveFace(ModelFace f)
     {
         if (faces.Contains(f))
         {
@@ -100,7 +106,7 @@ public class Vertex : MonoBehaviour
         }
     }
 
-    public void Show()
+    /*public void Show()
     {
         visible = true;
         meshRenderer.enabled = true;
@@ -114,6 +120,33 @@ public class Vertex : MonoBehaviour
         meshRenderer.enabled = false;
         boxCollider.enabled = false;
         debugText.gameObject.SetActive(false);
+    }*/
+
+    public ViewVertex GetViewVertex()
+    {
+        return viewVertex;
+    }
+
+    public Vector3 GetModelPosition()
+    {
+        return position;
+    }
+
+    public void UpdatePosition(Vector3 position)
+    {
+        this.position = position;
+        viewVertex.SetPosition(position);
+    }
+
+    private void OnStartFold()
+    {
+        Debug.Log(1);
+        CoroutineStarter.Instance.StartCoroutine(Paper.Instance.PerformFold(this));
+    }
+
+    private void OnStopFold()
+    {
+        Paper.Instance.EndFold();
     }
 
     /*public void DetermineVertexState()
@@ -185,7 +218,7 @@ public class Vertex : MonoBehaviour
         this.outerEdges = outerEdges;
     }*/
 
-    public void GiveColor(Color color)
+    /*public void GiveColor(Color color)
     {
         GetComponent<MeshRenderer>().material.color = color;
     }
@@ -221,10 +254,6 @@ public class Vertex : MonoBehaviour
             {
                 moving = true;
                 StartCoroutine(Paper.Instance.PerformFold(this));
-                /*for (int i = 0; i < faces.Count; i++)
-                {
-                    StartCoroutine(faces[i].PerformFold(this));
-                }*/
             }
             else
             {
@@ -238,11 +267,7 @@ public class Vertex : MonoBehaviour
         if (moving && !Paper.Instance.debugMode)
         {
             moving = false;
-            /*for (int i = 0; i < faces.Count; i++)
-            {
-                faces[i].EndFold();
-            }*/
             Paper.Instance.EndFold();
         }
-    }
+    }*/
 }

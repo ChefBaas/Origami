@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Face
+public class ModelFace
 {
     private int height = 0;
     public int Height
@@ -11,20 +11,27 @@ public class Face
         set => height = value;
     }
 
-    public List<Vertex> vertices = new List<Vertex>();
-    public List<Edge> edges = new List<Edge>();
+    public List<ModelVertex> vertices = new List<ModelVertex>();
+    public List<ModelEdge> edges = new List<ModelEdge>();
 
     private bool performingFold = false;
 
     [HideInInspector]
     public int number = -1;
 
-    public Face()
+    public ModelFace()
     {
         Paper.Instance.NewFace(this, out number);
     }
 
-    public void AddVertex(Vertex v)
+    public ViewFace GetViewFace()
+    {
+        ViewFace viewFace = new ViewFace();
+
+        return viewFace;
+    }
+
+    public void AddVertex(ModelVertex v)
     {
         if (!vertices.Contains(v))
         {
@@ -33,7 +40,7 @@ public class Face
         }
     }
 
-    public void RemoveVertex(Vertex v)
+    public void RemoveVertex(ModelVertex v)
     {
         if (vertices.Contains(v))
         {
@@ -46,7 +53,7 @@ public class Face
         }
     }
 
-    public void AddEdge(Edge e)
+    public void AddEdge(ModelEdge e)
     {
         if (!edges.Contains(e))
         {
@@ -54,7 +61,7 @@ public class Face
         }
     }
 
-    public void RemoveEdge(Edge e)
+    public void RemoveEdge(ModelEdge e)
     {
         if (edges.Contains(e))
         {
@@ -64,7 +71,8 @@ public class Face
 
     public void Flash()
     {
-        CoroutineStarter.Instance.StartCoroutine(ShowComponents());
+        // TODO: MAKE THIS WORK AGAIN
+        //CoroutineStarter.Instance.StartCoroutine(ShowComponents());
     }
 
     public void UpdateEdges()
@@ -81,7 +89,7 @@ public class Face
         }
     }
 
-    private IEnumerator ShowComponents()
+    /*private IEnumerator ShowComponents()
     {
         for (int i = 0; i < vertices.Count; i++)
         {
@@ -104,5 +112,5 @@ public class Face
             edges[i].GiveColor(Color.white);
             edges[i].UpdateLineRenderer(null);
         }
-    }
+    }*/
 }

@@ -4,25 +4,26 @@ using UnityEngine;
 
 public class FaceIntersection
 {
-    public Edge e;
+    public ModelEdge e;
     public Vector2 intersection;
-    public Vertex vertexAtIntersection;
+    public ModelVertex vertexAtIntersection;
     public bool makeNewStuff = true;
 
     public FaceIntersection() { }
     
-    public Vertex CreateNewVertex()
+    public ModelVertex CreateNewVertex()
     {
-        vertexAtIntersection = GameObject.Instantiate(Paper.Instance.VertexPrefab, intersection, Quaternion.identity, Paper.Instance.transform).GetComponent<Vertex>();
+        //vertexAtIntersection = GameObject.Instantiate(Paper.Instance.VertexPrefab, intersection, Quaternion.identity, Paper.Instance.transform).GetComponent<ModelVertex>();
+        vertexAtIntersection = new ModelVertex(intersection);
         return vertexAtIntersection;
     }
 
-    public Edge CreateNewEdge(Vertex movingVertex)
+    public ModelEdge CreateNewEdge(ModelVertex movingVertex)
     {
-        return new Edge(movingVertex, vertexAtIntersection);
+        return new ModelEdge(movingVertex, vertexAtIntersection);
     }
 
-    public void UpdateExistingEdge(Vertex nonMovingVertex)
+    public void UpdateExistingEdge(ModelVertex nonMovingVertex)
     {
         e.UpdateEdge(nonMovingVertex, vertexAtIntersection);
     }

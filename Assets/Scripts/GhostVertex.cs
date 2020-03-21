@@ -4,28 +4,29 @@ using UnityEngine;
 
 public class GhostVertex : MonoBehaviour
 {
-    public delegate void FoundAnchor(Vertex vertex);
+    public delegate void FoundAnchor(ModelVertex vertex);
     public event FoundAnchor OnFoundAnchor;
     public delegate void LostAnchor();
     public event LostAnchor OnLostAnchor;
 
     [SerializeField]
     private GameObject child;
-    private Vertex anchor;
+    private ModelVertex anchor;
 
     private void LateUpdate()
     {
         if (anchor != null)
         {
-            child.transform.position = anchor.transform.position;
+            child.transform.position = anchor.GetModelPosition();
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    // TODO: MAKE THIS WORK AGAIN
+    /*private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<Vertex>())
+        if (other.GetComponent<ModelVertex>())
         {
-            anchor = other.GetComponent<Vertex>();
+            anchor = other.GetComponent<ModelVertex>();
             if (OnFoundAnchor != null)
             {
                 OnFoundAnchor(anchor);
@@ -35,7 +36,7 @@ public class GhostVertex : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<Vertex>())
+        if (other.GetComponent<ModelVertex>())
         {
             anchor = null;
             child.transform.position = transform.position;
@@ -44,13 +45,13 @@ public class GhostVertex : MonoBehaviour
                 OnLostAnchor();
             }
         }
-    }
+    }*/
 
     public Vector2 GetPosition()
     {
         if (anchor != null)
         {
-            return anchor.transform.position;
+            return anchor.GetModelPosition();
         }
         return transform.position;
     }

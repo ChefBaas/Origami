@@ -14,7 +14,7 @@ public class FoldInformation
         get => faceIntersection1;
     }
 
-    public Edge newEdge;
+    public ModelEdge newEdge;
 
     public FoldInformation()
     {
@@ -27,7 +27,7 @@ public class FoldInformation
     /// <param name="e"></param>
     /// <param name="intersection"></param>
     /// <returns>Returns true if this foldInformation instance is complete; it needs to intersect with 2 edges. If something tries to add a third, an error is thrown.</returns>
-    public bool NewFaceIntersection(Edge e, Vector2 intersection)
+    public bool NewFaceIntersection(ModelEdge e, Vector2 intersection)
     {
         if (faceIntersection0 == null)
         {
@@ -50,7 +50,7 @@ public class FoldInformation
         }
     }
 
-    public bool NewFaceIntersection(Vertex v)
+    public bool NewFaceIntersection(ModelVertex v)
     {
         if (faceIntersection0 == null)
         {
@@ -73,9 +73,9 @@ public class FoldInformation
         }
     }
 
-    public Edge CreateNewEdge()
+    public ModelEdge CreateNewEdge()
     {
-        newEdge = new Edge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection);
+        newEdge = new ModelEdge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection);
         return newEdge;
     }
 }

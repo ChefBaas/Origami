@@ -17,11 +17,11 @@ public class Paper : MonoBehaviour
     {
         get => lineMaterial;
     }
-    [SerializeField] private GameObject vertexPrefab, snappingGhostVertexPrefab, supportGhostVertexPrefab;//, facePrefab;
-    public GameObject VertexPrefab
+    [SerializeField] private GameObject snappingGhostVertexPrefab, supportGhostVertexPrefab;//, vertexPrefab, facePrefab;
+    /*public GameObject VertexPrefab
     {
         get => vertexPrefab;
-    }
+    }*/
     public GameObject SnappingGhostVertexPrefab
     {
         get => snappingGhostVertexPrefab;
@@ -34,13 +34,14 @@ public class Paper : MonoBehaviour
     {
         get => facePrefab;
     }*/
-    private List<Vertex> vertices = new List<Vertex>();
-    private List<Edge> edges = new List<Edge>();
-    private List<Face> faces = new List<Face>();
+    private List<ModelVertex> vertices = new List<ModelVertex>();
+    private List<ModelEdge> edges = new List<ModelEdge>();
+    private List<ModelFace> faces = new List<ModelFace>();
 
     [HideInInspector]
     public bool debugMode = false;
     private bool performingFold = false;
+    private bool isFirstUpdate = true;
 
     private void Awake()
     {
@@ -52,11 +53,6 @@ public class Paper : MonoBehaviour
     {
         SummonPaper();
         //SummonTripod();
-
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            vertices[i].DetermineVertexState();
-        }
     }
 
     private int faceIndex = 0;
@@ -82,13 +78,30 @@ public class Paper : MonoBehaviour
         }
     }
 
-    public IEnumerator PerformFold(Vertex v)
+    private void LateUpdate()
     {
+        if (isFirstUpdate)
+        {
+            isFirstUpdate = false;
+            //view.SetStartState(vertices, edges);
+
+            /*Debug.Log("HALLO!");
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                Debug.Log("JA HOOR");
+                vertices[i].DetermineVertexState();
+            }*/
+        }
+    }
+
+    public IEnumerator PerformFold(ModelVertex v)
+    {
+        Debug.Log(2);
         performingFold = true;
-        List<Vertex> verticesToMove = new List<Vertex>() { v };
-        List<Face> facesInvolved = new List<Face>();
-        Dictionary<Face, FoldInformation> foldInfo = new Dictionary<Face, FoldInformation>();
-        List<Vertex> verticesOnFold = new List<Vertex>();
+        List<ModelVertex> verticesToMove = new List<ModelVertex>() { v };
+        List<ModelFace> facesInvolved = new List<ModelFace>();
+        Dictionary<ModelFace, FoldInformation> foldInfo = new Dictionary<ModelFace, FoldInformation>();
+        List<ModelVertex> verticesOnFold = new List<ModelVertex>();
         List<GameObject> snappingGhosts = new List<GameObject>() { Instantiate(snappingGhostVertexPrefab, transform) };
         List<GameObject> supportGhosts = new List<GameObject>();
 
@@ -98,6 +111,7 @@ public class Paper : MonoBehaviour
 
         while(true)
         {
+            Debug.Log(3);
             // Before anything else, check whether the vertex can actually be moved where the user tries to move it
             bool moveIsLegal = true; //v.MoveIsLegal(v.transform.position);
 
@@ -107,7 +121,8 @@ public class Paper : MonoBehaviour
                 snappingGhosts[0].transform.position = Camera.main.ScreenToWorldPoint(Input.mousePosition) + Vector3.back * Camera.main.transform.position.z;
 
                 // Calculate where the foldline is
-                Linepiece foldLine = GetFoldLine(v.transform.position, snappingGhosts[0].GetComponent<GhostVertex>().GetPosition());
+                //Linepiece foldLine = GetFoldLine(v.transform.position, snappingGhosts[0].GetComponent<GhostVertex>().GetPosition());
+                Linepiece foldLine = GetFoldLine(v.GetModelPosition(), snappingGhosts[0].GetComponent<GhostVertex>().GetPosition());
                 lineRenderer.SetPositions(new Vector3[] { foldLine.Start, foldLine.End });
 
                 // Find which vertices (roughly) lie on the foldline
@@ -128,18 +143,19 @@ public class Paper : MonoBehaviour
                 // Create ghost vertices to indicate where vertices will end up
                 CreateGhosts(foldLine, verticesToMove, foldInfo, ref snappingGhosts, ref supportGhosts);
 
-
+                //view.UpdateView(vertices, edges, faces, foldInfo, verticesToMove, facesInvolved, snappingGhosts);
                 // When the user releases the mouse button, calculate all the new stuff
                 if (!performingFold)
                 {
                     // Mirror existing vertices
                     for (int i = 0; i < verticesToMove.Count; i++)
                     {
-                        verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
+                        //verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
+                        verticesToMove[i].UpdatePosition(snappingGhosts[i].GetComponent<GhostVertex>().GetPosition());
                     }
 
                     // Create new vertices
-                    List<Vertex> newVertices = new List<Vertex>();
+                    List<ModelVertex> newVertices = new List<ModelVertex>();
                     List<FaceIntersection> uniqueFaceIntersections = new List<FaceIntersection>();
                     // For each FaceIntersection, check whether a vertex was created on its edge
                     // If not, create one, if so, assign the already created vertex
@@ -203,7 +219,7 @@ public class Paper : MonoBehaviour
                     for (int i = 0; i < facesInvolved.Count; i++)
                     {
                         Debug.Log(facesInvolved[i].Height);
-                        Face face = new Face();
+                        ModelFace face = new ModelFace();
                         //Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
                         face.Height = facesInvolved[i].Height + heightIncrease;
                         for (int j = 0; j < verticesToMove.Count; j++)
@@ -259,7 +275,7 @@ public class Paper : MonoBehaviour
         performingFold = false;
     }
 
-    public void NewVertex(Vertex v, out int number)
+    public void NewVertex(ModelVertex v, out int number)
     {
         if (!vertices.Contains(v))
         {
@@ -275,12 +291,12 @@ public class Paper : MonoBehaviour
         }
     }
 
-    public void NewEdge(Edge e, out int number)
+    public void NewEdge(ModelEdge e, out int number)
     {
         if (!edges.Contains(e))
         {
             edges.Add(e);
-            //e.Show();
+            e.Show();
             number = edges.Count;
         }
         else
@@ -290,7 +306,7 @@ public class Paper : MonoBehaviour
         }
     }
 
-    public void NewFace(Face f, out int number)
+    public void NewFace(ModelFace f, out int number)
     {
         Debug.Log("New FAce!");
         if (!faces.Contains(f))
@@ -319,7 +335,7 @@ public class Paper : MonoBehaviour
         return foldLine;
     }
 
-    private void FindVerticesToMove(Linepiece foldLine, Vertex movingVertex, ref List<Vertex> verticesToMove, ref List<Face> facesInvolved)
+    private void FindVerticesToMove(Linepiece foldLine, ModelVertex movingVertex, ref List<ModelVertex> verticesToMove, ref List<ModelFace> facesInvolved)
     {
         // Make sure the movingVertex is added to the list
         if (!verticesToMove.Contains(movingVertex))
@@ -330,7 +346,7 @@ public class Paper : MonoBehaviour
         for (int i = 0; i < faces.Count; i++)
         {
             // Only check the vertices part of thie face
-            List<Vertex> vertices = faces[i].vertices;
+            List<ModelVertex> vertices = faces[i].vertices;
             if (vertices.Contains(movingVertex))
             {
                 // Record all faces involved (a face is involved if it contains a moving vertex)
@@ -344,7 +360,9 @@ public class Paper : MonoBehaviour
                     {
                         // We need this to supply to the intersection function, but we don't use it
                         Vector2 intersection;
-                        Linepiece lp = new Linepiece(movingVertex.transform.position, vertices[j].transform.position);
+                        // Check whether vertices[j] lies on the same side of the foldline as movingVertex
+                        //Linepiece lp = new Linepiece(movingVertex.transform.position, vertices[j].transform.position);
+                        Linepiece lp = new Linepiece(movingVertex.GetModelPosition(), vertices[j].GetModelPosition());
                         if (!MathUtility.LinepiecesIntersect(foldLine, lp, out intersection))
                         {
                             verticesToMove.Add(vertices[j]);
@@ -364,7 +382,7 @@ public class Paper : MonoBehaviour
     /// <param name="foldLine"></param>
     /// <param name="facesInvolved"></param>
     /// <param name="foldInfo"></param>
-    private void GetFoldInformation(Linepiece foldLine, List<Face> facesInvolved, ref Dictionary<Face, FoldInformation> foldInfo, List<Vertex> verticesOnFold)
+    private void GetFoldInformation(Linepiece foldLine, List<ModelFace> facesInvolved, ref Dictionary<ModelFace, FoldInformation> foldInfo, List<ModelVertex> verticesOnFold)
     {
         for (int i = 0; i < facesInvolved.Count; i++)
         {
@@ -380,7 +398,7 @@ public class Paper : MonoBehaviour
                     }
                     // Check whether the fold goes through a vertex on the intersected edge
                     // If so, no new vertex needs to be created, so send different info to the foldInformation instance
-                    Vertex vertexOnFold = null;
+                    ModelVertex vertexOnFold = null;
                     for (int k = 0; k < verticesOnFold.Count; k++)
                     {
                         if (facesInvolved[i].edges[j].HasVertex(verticesOnFold[k])) 
@@ -409,12 +427,12 @@ public class Paper : MonoBehaviour
         }
     }
 
-    private List<Vertex> GetVerticesOnFold(Linepiece foldLine)
+    private List<ModelVertex> GetVerticesOnFold(Linepiece foldLine)
     {
-        List<Vertex> result = new List<Vertex>();
+        List<ModelVertex> result = new List<ModelVertex>();
         for (int i = 0; i < vertices.Count; i++)
         {
-            float distanceToFoldLine = MathUtility.DistancePointToLinepiece(foldLine, vertices[i].transform.position);
+            float distanceToFoldLine = MathUtility.DistancePointToLinepiece(foldLine, vertices[i].GetModelPosition());
             if (distanceToFoldLine < 0.1f)
             {
                 result.Add(vertices[i]);
@@ -423,13 +441,13 @@ public class Paper : MonoBehaviour
         return result;
     }
     
-    private Dictionary<Face, List<FoldInformation>> GetIntersections(Linepiece foldLine, List<Vertex> movingVertices, List<Vertex> verticesOnFold, List<Face> facesInvolved)
+    private Dictionary<ModelFace, List<FoldInformation>> GetIntersections(Linepiece foldLine, List<ModelVertex> movingVertices, List<ModelVertex> verticesOnFold, List<ModelFace> facesInvolved)
     {
-        Dictionary<Face, List<FoldInformation>> foldInfo = new Dictionary<Face, List<FoldInformation>>();
+        Dictionary<ModelFace, List<FoldInformation>> foldInfo = new Dictionary<ModelFace, List<FoldInformation>>();
         for (int i = 0; i < facesInvolved.Count; i++)
         {
             foldInfo.Add(facesInvolved[i], new List<FoldInformation>());
-            List<Edge> edges = facesInvolved[i].edges;
+            List<ModelEdge> edges = facesInvolved[i].edges;
             for (int j = 0; j < edges.Count; j++)
             {
                 // Check first whether any edges contain vertices that intersect with the foldLine
@@ -449,7 +467,7 @@ public class Paper : MonoBehaviour
                     Vector2 intersection;
                     if (MathUtility.LinepiecesIntersect(edges[j].GetLinepiece(), foldLine, out intersection))
                     {
-                        Vertex movingVertexOnThisEdge = null;
+                        ModelVertex movingVertexOnThisEdge = null;
                         for (int k = 0; k < movingVertices.Count; k++)
                         {
                             if (edges[j].HasVertex(movingVertices[k]))
@@ -465,7 +483,7 @@ public class Paper : MonoBehaviour
         return foldInfo;
     }
 
-    private void CreateGhosts(Linepiece foldLine, List<Vertex> verticesToMove, Dictionary<Face, FoldInformation> foldInfo, ref List<GameObject> snappingGhosts, ref List<GameObject> supportGhosts)
+    private void CreateGhosts(Linepiece foldLine, List<ModelVertex> verticesToMove, Dictionary<ModelFace, FoldInformation> foldInfo, ref List<GameObject> snappingGhosts, ref List<GameObject> supportGhosts)
     {
         while(verticesToMove.Count > snappingGhosts.Count)
         {
@@ -480,7 +498,7 @@ public class Paper : MonoBehaviour
         // Start at 1, because the first one should already be taken care of; it is used to calculate the foldLine
         for (int i = 1; i < snappingGhosts.Count; i++)
         {
-            snappingGhosts[i].transform.position = MathUtility.MirrorPointInLinepiece(foldLine, verticesToMove[i].transform.position);
+            snappingGhosts[i].transform.position = MathUtility.MirrorPointInLinepiece(foldLine, verticesToMove[i].GetModelPosition());
         }
 
         // Find all unique intersected edges with the intersection point
@@ -521,19 +539,25 @@ public class Paper : MonoBehaviour
     private void SummonPaper()
     {
         //Face f1 = Instantiate(facePrefab, transform).GetComponent<Face>();
-        Face f1 = new Face();
+        ModelFace f1 = new ModelFace();
         f1.Height = 0;
 
-        Vertex v1 = Instantiate(vertexPrefab, -Vector2.one * 3f, Quaternion.identity).GetComponent<Vertex>();
-        Vertex v2 = Instantiate(vertexPrefab, new Vector3(3, -3, 0), Quaternion.identity).GetComponent<Vertex>();
-        //Vertex v3 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<Vertex>();
-        Vertex v4 = Instantiate(vertexPrefab, new Vector3(-3, 3, 0), Quaternion.identity).GetComponent<Vertex>();
-        Vertex v5 = Instantiate(vertexPrefab, Vector2.one * 3f, Quaternion.identity).GetComponent<Vertex>();
+        ModelVertex v1 = new ModelVertex(-Vector2.one * 3f);
+        ModelVertex v2 = new ModelVertex(new Vector3(3, -3, 0));
+        //ModelVertex v3 = new ModelVertex(Vector2.zero);
+        ModelVertex v4 = new ModelVertex(new Vector3(-3, 3, 0));
+        ModelVertex v5 = new ModelVertex(Vector3.one * 3f);
 
-        Edge e1 = new Edge(v2, v1);
-        Edge e2 = new Edge(v1, v4);
-        Edge e3 = new Edge(v4, v5);
-        Edge e4 = new Edge(v5, v2);
+        /*ModelVertex v1 = Instantiate(vertexPrefab, -Vector2.one * 3f, Quaternion.identity).GetComponent<ModelVertex>();
+        ModelVertex v2 = Instantiate(vertexPrefab, new Vector3(3, -3, 0), Quaternion.identity).GetComponent<ModelVertex>();
+        //Vertex v3 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<Vertex>();
+        ModelVertex v4 = Instantiate(vertexPrefab, new Vector3(-3, 3, 0), Quaternion.identity).GetComponent<ModelVertex>();
+        ModelVertex v5 = Instantiate(vertexPrefab, Vector2.one * 3f, Quaternion.identity).GetComponent<ModelVertex>();*/
+
+        ModelEdge e1 = new ModelEdge(v2, v1);
+        ModelEdge e2 = new ModelEdge(v1, v4);
+        ModelEdge e3 = new ModelEdge(v4, v5);
+        ModelEdge e4 = new ModelEdge(v5, v2);
         /*Edge e5 = new Edge(v1, v3);
         Edge e6 = new Edge(v4, v3);
         Edge e7 = new Edge(v3, v5);
@@ -549,24 +573,24 @@ public class Paper : MonoBehaviour
         f1.AddEdge(e4);
     }
 
-    private void SummonTripod()
+    /*private void SummonTripod()
     {
-        Face f1 = new Face();
+        ModelFace f1 = new ModelFace();
         f1.Height = 0;
-        Vertex v1 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<Vertex>();
+        ModelVertex v1 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<ModelVertex>();
         vertices.Add(v1);
-        Vertex v2 = Instantiate(vertexPrefab, Vector2.up, Quaternion.identity, transform).GetComponent<Vertex>();
+        ModelVertex v2 = Instantiate(vertexPrefab, Vector2.up, Quaternion.identity, transform).GetComponent<ModelVertex>();
         vertices.Add(v2);
-        Vertex v3 = Instantiate(vertexPrefab, Vector2.down + Vector2.right, Quaternion.identity, transform).GetComponent<Vertex>();
+        ModelVertex v3 = Instantiate(vertexPrefab, Vector2.down + Vector2.right, Quaternion.identity, transform).GetComponent<ModelVertex>();
         vertices.Add(v3);
-        Vertex v4 = Instantiate(vertexPrefab, Vector2.down + Vector2.left, Quaternion.identity, transform).GetComponent<Vertex>();
+        ModelVertex v4 = Instantiate(vertexPrefab, Vector2.down + Vector2.left, Quaternion.identity, transform).GetComponent<ModelVertex>();
         vertices.Add(v4);
 
-        Edge e1 = new Edge(v1, v2);
+        ModelEdge e1 = new ModelEdge(v1, v2);
         edges.Add(e1);
-        Edge e2 = new Edge(v1, v3);
+        ModelEdge e2 = new ModelEdge(v1, v3);
         edges.Add(e2);
-        Edge e3 = new Edge(v1, v4);
+        ModelEdge e3 = new ModelEdge(v1, v4);
         edges.Add(e3);
 
         f1.AddVertex(v1);
@@ -576,5 +600,5 @@ public class Paper : MonoBehaviour
         f1.AddEdge(e1);
         f1.AddEdge(e2);
         f1.AddEdge(e3);
-    }
+    }*/
 }
