@@ -9,6 +9,7 @@ public class Edge
     private LineRenderer lineRenderer;
     private TextMesh debugText;
     private GameObject lineObject;
+    private bool visible = false;
 
     public int number;
 
@@ -24,16 +25,18 @@ public class Edge
 
         linepiece = CalculateLinepieceValues();
         lineObject = new GameObject();
+
+        debugText = lineObject.AddComponent<TextMesh>();
+        debugText.color = Color.black;
+        debugText.characterSize = 0.2f;
+
         lineObject.name = "EdgeDebugObject";
         lineRenderer = lineObject.AddComponent<LineRenderer>();
         lineRenderer.material = Paper.Instance.LineMaterial;
         lineRenderer.startWidth = 0.05f;
         lineRenderer.endWidth = 0.05f;
         UpdateLineRenderer(null);
-
-        debugText = lineObject.AddComponent<TextMesh>();
-        debugText.color = Color.black;
-        debugText.characterSize = 0.2f;
+        Hide();
 
         lineObject.transform.position = (v1.transform.position + v2.transform.position) / 2f;
 
@@ -65,6 +68,20 @@ public class Edge
     public bool HasVertex(Vertex v)
     {
         return v == v1 || v == v2;
+    }
+
+    public void Show()
+    {
+        visible = true;
+        lineRenderer.enabled = true;
+        debugText.gameObject.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        visible = false;
+        lineRenderer.enabled = false;
+        debugText.gameObject.SetActive(false);
     }
 
     public void UpdateLineRenderer(Vertex source)
@@ -110,7 +127,7 @@ public class Edge
         this.v2 = v2;
         v1.AddEdge(this);
         v2.AddEdge(this);
-
+        
         UpdateLineRenderer(null);
         lineObject.transform.position = (v1.transform.position + v2.transform.position) / 2f;
     }

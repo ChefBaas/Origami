@@ -11,14 +11,13 @@ public class Paper : MonoBehaviour
         get => instance;
     }
 
-    [SerializeField]
-    private Material lineMaterial;
+    [SerializeField] PaperView view;
+    [SerializeField] private Material lineMaterial;
     public Material LineMaterial
     {
         get => lineMaterial;
     }
-    [SerializeField]
-    private GameObject vertexPrefab, snappingGhostVertexPrefab, supportGhostVertexPrefab, facePrefab;
+    [SerializeField] private GameObject vertexPrefab, snappingGhostVertexPrefab, supportGhostVertexPrefab;//, facePrefab;
     public GameObject VertexPrefab
     {
         get => vertexPrefab;
@@ -31,10 +30,10 @@ public class Paper : MonoBehaviour
     {
         get => supportGhostVertexPrefab;
     }
-    public GameObject FacePrefab
+    /*public GameObject FacePrefab
     {
         get => facePrefab;
-    }
+    }*/
     private List<Vertex> vertices = new List<Vertex>();
     private List<Edge> edges = new List<Edge>();
     private List<Face> faces = new List<Face>();
@@ -204,14 +203,15 @@ public class Paper : MonoBehaviour
                     for (int i = 0; i < facesInvolved.Count; i++)
                     {
                         Debug.Log(facesInvolved[i].Height);
-                        Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
+                        Face face = new Face();
+                        //Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
                         face.Height = facesInvolved[i].Height + heightIncrease;
                         for (int j = 0; j < verticesToMove.Count; j++)
                         {
                             if (facesInvolved[i].vertices.Contains(verticesToMove[j]))
                             {
                                 face.AddVertex(verticesToMove[j]);
-                                verticesToMove[j].transform.parent = face.transform;
+                                //verticesToMove[j].transform.parent = face.transform;
                                 facesInvolved[i].RemoveVertex(verticesToMove[j]);
                             }
                         }
@@ -219,8 +219,8 @@ public class Paper : MonoBehaviour
                         facesInvolved[i].AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection);
                         face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection);
                         face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection);
-                        foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection.transform.parent = face.transform;
-                        foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection.transform.parent = face.transform;
+                        //foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection.transform.parent = face.transform;
+                        //foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection.transform.parent = face.transform;
 
                         facesInvolved[i].UpdateEdges();
                         face.UpdateEdges();
@@ -265,7 +265,8 @@ public class Paper : MonoBehaviour
         {
             vertices.Add(v);
             number = vertices.Count;
-            v.DetermineVertexState();
+            //v.Show();
+            //v.DetermineVertexState();
         }
         else
         {
@@ -279,6 +280,7 @@ public class Paper : MonoBehaviour
         if (!edges.Contains(e))
         {
             edges.Add(e);
+            //e.Show();
             number = edges.Count;
         }
         else
@@ -456,12 +458,6 @@ public class Paper : MonoBehaviour
                                 break;
                             }
                         }
-                        /*FoldInformation fi = new FoldInformation();
-                        fi.edge = edges[j];
-                        fi.intersection = intersection;
-                        fi.movingVertex = movingVertexOnThisEdge;
-                        fi.face = facesInvolved[i];
-                        foldInfo[facesInvolved[i]].Add(fi);*/
                     }
                 }
             }
@@ -522,43 +518,17 @@ public class Paper : MonoBehaviour
         }
     }
 
-    private List<Vertex> GetOuterVertices(Linepiece foldLine, List<Vertex> vertices, Face face)
-    {
-        List<Vertex> result = new List<Vertex>() { null, null };
-        float smallestDistance = float.PositiveInfinity;
-        float biggestDistance = 0f;
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            float distance = Vector2.Distance(vertices[i].transform.position, foldLine.Start);
-            if (distance < smallestDistance)
-            {
-                smallestDistance = distance;
-                result[0] = vertices[i];
-            }
-            if (distance > biggestDistance)
-            {
-                biggestDistance = distance;
-                result[1] = vertices[i];
-            }
-        }
-
-        if (result[0] == null || result[1] == null || result[0] == result[1])
-        {
-            Debug.LogErrorFormat("GetOuterVertices failed! Closest vertex is {0}, farthest vertex is {1}. They are{2} equal", result[0], result[1], result[0] == result[1] ? "" : " not");
-        }
-        return result;
-    }
-
     private void SummonPaper()
     {
-        Face f1 = Instantiate(facePrefab, transform).GetComponent<Face>();
+        //Face f1 = Instantiate(facePrefab, transform).GetComponent<Face>();
+        Face f1 = new Face();
         f1.Height = 0;
 
-        Vertex v1 = Instantiate(vertexPrefab, -Vector2.one * 3f, Quaternion.identity, f1.transform).GetComponent<Vertex>();
-        Vertex v2 = Instantiate(vertexPrefab, new Vector3(3, -3, 0), Quaternion.identity, f1.transform).GetComponent<Vertex>();
+        Vertex v1 = Instantiate(vertexPrefab, -Vector2.one * 3f, Quaternion.identity).GetComponent<Vertex>();
+        Vertex v2 = Instantiate(vertexPrefab, new Vector3(3, -3, 0), Quaternion.identity).GetComponent<Vertex>();
         //Vertex v3 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<Vertex>();
-        Vertex v4 = Instantiate(vertexPrefab, new Vector3(-3, 3, 0), Quaternion.identity, f1.transform).GetComponent<Vertex>();
-        Vertex v5 = Instantiate(vertexPrefab, Vector2.one * 3f, Quaternion.identity, f1.transform).GetComponent<Vertex>();
+        Vertex v4 = Instantiate(vertexPrefab, new Vector3(-3, 3, 0), Quaternion.identity).GetComponent<Vertex>();
+        Vertex v5 = Instantiate(vertexPrefab, Vector2.one * 3f, Quaternion.identity).GetComponent<Vertex>();
 
         Edge e1 = new Edge(v2, v1);
         Edge e2 = new Edge(v1, v4);
@@ -581,6 +551,8 @@ public class Paper : MonoBehaviour
 
     private void SummonTripod()
     {
+        Face f1 = new Face();
+        f1.Height = 0;
         Vertex v1 = Instantiate(vertexPrefab, Vector2.zero, Quaternion.identity, transform).GetComponent<Vertex>();
         vertices.Add(v1);
         Vertex v2 = Instantiate(vertexPrefab, Vector2.up, Quaternion.identity, transform).GetComponent<Vertex>();
@@ -596,5 +568,13 @@ public class Paper : MonoBehaviour
         edges.Add(e2);
         Edge e3 = new Edge(v1, v4);
         edges.Add(e3);
+
+        f1.AddVertex(v1);
+        f1.AddVertex(v2);
+        f1.AddVertex(v3);
+        f1.AddVertex(v4);
+        f1.AddEdge(e1);
+        f1.AddEdge(e2);
+        f1.AddEdge(e3);
     }
 }

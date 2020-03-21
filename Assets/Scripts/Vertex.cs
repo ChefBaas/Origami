@@ -4,31 +4,37 @@ using UnityEngine;
 
 public class Vertex : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject ghostVertexPrefab;
-    [SerializeField]
-    private TextMesh debugText;
+    [SerializeField] private MeshRenderer meshRenderer;
+    [SerializeField] private BoxCollider boxCollider;
+    [SerializeField] private GameObject ghostVertexPrefab;
+    [SerializeField] private TextMesh debugText;
 
     public List<Edge> edges = new List<Edge>();
     public List<Face> faces = new List<Face>();
-    private bool isOuterVertex;
+    private bool isOuterVertex = true;
     public bool IsOuterVertex
     {
         get => isOuterVertex;
     }
-    private List<Edge> outerEdges;
+    /*private List<Edge> outerEdges;
     public List<Edge> OuterEdges
     {
         get => outerEdges;
-    }
+    }*/
 
     private Vector3 lastPosition;
     private bool moving = false;
     private Coroutine fancyStuffCoroutine;
+    private bool visible = false;
 
     [HideInInspector]
     public int number = -1;
-    
+
+    private void Awake()
+    {
+        Hide();
+    }
+
     void Start()
     {
         lastPosition = transform.position;
@@ -42,7 +48,7 @@ public class Vertex : MonoBehaviour
     
     void LateUpdate()
     {
-        if (lastPosition != transform.position)
+        if (lastPosition != transform.position && visible)
         {
             for (int i = 0; i < edges.Count; i++)
             {
@@ -94,7 +100,23 @@ public class Vertex : MonoBehaviour
         }
     }
 
-    public void DetermineVertexState()
+    public void Show()
+    {
+        visible = true;
+        meshRenderer.enabled = true;
+        boxCollider.enabled = true;
+        debugText.gameObject.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        visible = false;
+        meshRenderer.enabled = false;
+        boxCollider.enabled = false;
+        debugText.gameObject.SetActive(false);
+    }
+
+    /*public void DetermineVertexState()
     {
         Edge randomEdge = edges[Random.Range(0, edges.Count)];
         EdgeComparisonInfo minEdge = new EdgeComparisonInfo();
@@ -132,9 +154,9 @@ public class Vertex : MonoBehaviour
             isOuterVertex = true;
         }
         SetOuterEdges(new List<Edge>() { minEdge.e2, maxEdge.e2 });
-    }
+    }*/
 
-    public bool MoveIsLegal(Vector3 newPosition)
+    /*public bool MoveIsLegal(Vector3 newPosition)
     {
         float currentAngle = Vector2.SignedAngle(outerEdges[0].GetOther(this).transform.position - transform.position, outerEdges[1].GetOther(this).transform.position - transform.position);
         float movedAngle = Vector2.SignedAngle(outerEdges[0].GetOther(this).transform.position - newPosition, outerEdges[1].GetOther(this).transform.position - newPosition);
@@ -145,9 +167,9 @@ public class Vertex : MonoBehaviour
 
         float distance = Vector2.Distance(transform.position, newPosition);
         return distance > 0.1f;
-    }
+    }*/
 
-    public void SetOuterEdges(List<Edge> outerEdges)
+    /*public void SetOuterEdges(List<Edge> outerEdges)
     {
         if (outerEdges.Count != 2)
         {
@@ -161,7 +183,7 @@ public class Vertex : MonoBehaviour
         }
 
         this.outerEdges = outerEdges;
-    }
+    }*/
 
     public void GiveColor(Color color)
     {

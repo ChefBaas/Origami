@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Face : MonoBehaviour
+public class Face
 {
     private int height = 0;
     public int Height
@@ -19,7 +19,7 @@ public class Face : MonoBehaviour
     [HideInInspector]
     public int number = -1;
 
-    private void Awake()
+    public Face()
     {
         Paper.Instance.NewFace(this, out number);
     }
@@ -64,7 +64,7 @@ public class Face : MonoBehaviour
 
     public void Flash()
     {
-        StartCoroutine(ShowComponents());
+        CoroutineStarter.Instance.StartCoroutine(ShowComponents());
     }
 
     public void UpdateEdges()

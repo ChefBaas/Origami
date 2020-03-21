@@ -294,6 +294,49 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1358752002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1358752004}
+  - component: {fileID: 1358752003}
+  m_Layer: 0
+  m_Name: CoroutineStarter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1358752003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1358752002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd13242a241ab114db2b71c1b4c23d4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1358752004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1358752002}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.6103055, y: 2.8487117, z: -2.12647}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1602475283
 GameObject:
   m_ObjectHideFlags: 0
@@ -304,6 +347,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1602475285}
   - component: {fileID: 1602475284}
+  - component: {fileID: 1602475286}
   m_Layer: 0
   m_Name: Paper
   m_TagString: Untagged
@@ -323,14 +367,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 734f4387333dc5d45aa97e01e05aada1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  view: {fileID: 1602475286}
   lineMaterial: {fileID: 2100000, guid: af30c94bac20d0f48810327be8664431, type: 2}
   vertexPrefab: {fileID: 3601799049628198739, guid: 39a3bd80cdf6a284cab745e3ec18d0d8,
     type: 3}
   snappingGhostVertexPrefab: {fileID: 3601799049628198739, guid: 83c0bfaeda2f99d41955e5c9544fca7e,
     type: 3}
   supportGhostVertexPrefab: {fileID: 3601799049628198739, guid: dfa727baf2176be4f82ccf58098d1028,
-    type: 3}
-  facePrefab: {fileID: 2597353699251048013, guid: b4913375cf2cfda4689d21c083ff1c1f,
     type: 3}
   debugMode: 0
 --- !u!4 &1602475285
@@ -347,3 +390,15 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1602475286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1602475283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed47b82efaa373e4ca26d90ed49ca3d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
