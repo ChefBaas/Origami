@@ -17,11 +17,7 @@ public class Paper : MonoBehaviour
     {
         get => lineMaterial;
     }
-    [SerializeField] private GameObject snappingGhostVertexPrefab, supportGhostVertexPrefab;//, vertexPrefab, facePrefab;
-    /*public GameObject VertexPrefab
-    {
-        get => vertexPrefab;
-    }*/
+    [SerializeField] private GameObject snappingGhostVertexPrefab, supportGhostVertexPrefab, viewVertexPrefab;
     public GameObject SnappingGhostVertexPrefab
     {
         get => snappingGhostVertexPrefab;
@@ -30,10 +26,10 @@ public class Paper : MonoBehaviour
     {
         get => supportGhostVertexPrefab;
     }
-    /*public GameObject FacePrefab
+    public GameObject ViewVertexPrefab
     {
-        get => facePrefab;
-    }*/
+        get => viewVertexPrefab;
+    }
     private List<ModelVertex> vertices = new List<ModelVertex>();
     private List<ModelEdge> edges = new List<ModelEdge>();
     private List<ModelFace> faces = new List<ModelFace>();
@@ -69,7 +65,7 @@ public class Paper : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.F))
         {
-            faces[faceIndex].Flash();
+            faces[faceIndex].Highlight(0.5f);
             faceIndex++;
             if (faceIndex >= faces.Count)
             {
@@ -96,7 +92,6 @@ public class Paper : MonoBehaviour
 
     public IEnumerator PerformFold(ModelVertex v)
     {
-        Debug.Log(2);
         performingFold = true;
         List<ModelVertex> verticesToMove = new List<ModelVertex>() { v };
         List<ModelFace> facesInvolved = new List<ModelFace>();
@@ -111,7 +106,6 @@ public class Paper : MonoBehaviour
 
         while(true)
         {
-            Debug.Log(3);
             // Before anything else, check whether the vertex can actually be moved where the user tries to move it
             bool moveIsLegal = true; //v.MoveIsLegal(v.transform.position);
 
@@ -251,10 +245,10 @@ public class Paper : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
 
-        for (int i = 0; i < faces.Count; i++)
+        /*for (int i = 0; i < faces.Count; i++)
         {
             Debug.Log(faces[i].Height);
-        }
+        }*/
 
         // Clean up everything
         for (int i = 0; i < snappingGhosts.Count; i++)
@@ -296,7 +290,7 @@ public class Paper : MonoBehaviour
         if (!edges.Contains(e))
         {
             edges.Add(e);
-            e.Show();
+            //e.Show();
             number = edges.Count;
         }
         else
@@ -308,7 +302,6 @@ public class Paper : MonoBehaviour
 
     public void NewFace(ModelFace f, out int number)
     {
-        Debug.Log("New FAce!");
         if (!faces.Contains(f))
         {
             faces.Add(f);

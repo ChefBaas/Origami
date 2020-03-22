@@ -4,11 +4,6 @@ using UnityEngine;
 
 public class ModelVertex
 {
-    /*[SerializeField] private MeshRenderer meshRenderer;
-    [SerializeField] private BoxCollider boxCollider;
-    [SerializeField] private GameObject ghostVertexPrefab;
-    [SerializeField] private TextMesh debugText;*/
-
     public List<ModelEdge> edges = new List<ModelEdge>();
     public List<ModelFace> faces = new List<ModelFace>();
     private bool isOuterVertex = true;
@@ -22,11 +17,6 @@ public class ModelVertex
         get => outerEdges;
     }*/
 
-    /*private Vector3 lastPosition;
-    private bool moving = false;
-    private Coroutine fancyStuffCoroutine;
-    private bool visible = false;*/
-
     private ViewVertex viewVertex;
     private Vector3 position;
 
@@ -36,43 +26,14 @@ public class ModelVertex
     public ModelVertex(Vector3 position)
     {
         this.position = position;
-        //Hide();
 
-        viewVertex = new ViewVertex();
-        viewVertex.SetPosition(position);
+        viewVertex = GameObject.Instantiate(Paper.Instance.ViewVertexPrefab, position, Quaternion.identity, Paper.Instance.transform).GetComponent<ViewVertex>();
         viewVertex.OnStartDrag += OnStartFold;
         viewVertex.OnStopDrag += OnStopFold;
-
-        //lastPosition = transform.position;
+        
         Paper.Instance.NewVertex(this, out number);
-        //debugText.text = number.ToString();
-        /*for (int i = 0; i < edges.Count; i++)
-        {
-            edges[i].UpdateText();
-        }*/
+        viewVertex.SetText(number.ToString());
     }
-    
-    /*void LateUpdate()
-    {
-        if (lastPosition != transform.position && visible)
-        {
-            for (int i = 0; i < edges.Count; i++)
-            {
-                edges[i].UpdateLineRenderer(this);
-            }
-        }
-        lastPosition = transform.position;
-    }*/
-
-    /*public List<ModelVertex> GetAllNeighbours()
-    {
-        List<ModelVertex> neighbours = new List<ModelVertex>();
-        for (int i = 0; i < edges.Count; i++)
-        {
-            neighbours.Add(edges[i].GetOther(this));
-        }
-        return neighbours;
-    }*/
 
     public void AddEdge(ModelEdge e)
     {
@@ -106,21 +67,20 @@ public class ModelVertex
         }
     }
 
-    /*public void Show()
+    public void Show()
     {
-        visible = true;
-        meshRenderer.enabled = true;
-        boxCollider.enabled = true;
-        debugText.gameObject.SetActive(true);
+        viewVertex.Show();
     }
 
     public void Hide()
     {
-        visible = false;
-        meshRenderer.enabled = false;
-        boxCollider.enabled = false;
-        debugText.gameObject.SetActive(false);
-    }*/
+        viewVertex.Hide();
+    }
+
+    public void Highlight(float duration)
+    {
+        CoroutineStarter.Instance.StartCoroutine(viewVertex.Highlight(duration));
+    }
 
     public ViewVertex GetViewVertex()
     {
@@ -136,11 +96,15 @@ public class ModelVertex
     {
         this.position = position;
         viewVertex.SetPosition(position);
+        for (int i = 0; i < edges.Count; i++)
+        {
+            edges[i].UpdateLinepiece();
+            edges[i].UpdateViewEdge();
+        }
     }
 
     private void OnStartFold()
     {
-        Debug.Log(1);
         CoroutineStarter.Instance.StartCoroutine(Paper.Instance.PerformFold(this));
     }
 
@@ -216,58 +180,5 @@ public class ModelVertex
         }
 
         this.outerEdges = outerEdges;
-    }*/
-
-    /*public void GiveColor(Color color)
-    {
-        GetComponent<MeshRenderer>().material.color = color;
-    }
-
-    public void MoveToFront()
-    {
-        Vector3 frontPosition = transform.position + Vector3.back;
-        transform.position = frontPosition;
-    }
-
-    public void MoveToBack()
-    {
-        Vector3 backPosition = transform.position + Vector3.forward;
-        transform.position = backPosition;
-    }
-
-    private void OnMouseDown()
-    {
-        if (Paper.Instance.debugMode)
-        {
-            for (int i = 0; i < edges.Count; i++)
-            {
-                StartCoroutine(edges[i].Flash());
-            }
-        }
-    }
-
-    private void OnMouseDrag()
-    {
-        if (!moving && !Paper.Instance.debugMode)
-        {
-            if (isOuterVertex)
-            {
-                moving = true;
-                StartCoroutine(Paper.Instance.PerformFold(this));
-            }
-            else
-            {
-                Debug.LogError("This vertex cannot be moved!");
-            }
-        }
-    }
-
-    private void OnMouseUp()
-    {
-        if (moving && !Paper.Instance.debugMode)
-        {
-            moving = false;
-            Paper.Instance.EndFold();
-        }
     }*/
 }

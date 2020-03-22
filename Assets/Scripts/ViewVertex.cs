@@ -2,49 +2,76 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ViewVertex
+public class ViewVertex : MonoBehaviour
 {
     public delegate void StartDrag();
     public event StartDrag OnStartDrag;
     public delegate void StopDrag();
     public event StopDrag OnStopDrag;
 
-    private GameObject cube;
+    [SerializeField] private MeshRenderer meshRenderer, textRenderer;
+    [SerializeField] private BoxCollider boxCollider;
+    [SerializeField] private TextMesh text;
 
-    public ViewVertex()
+    public void SetPosition(Vector2 position)
     {
-        cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cube.transform.localScale = Vector3.one * 0.2f;
-        MouseEventResponder mouseEventResponder = cube.AddComponent<MouseEventResponder>();
-        mouseEventResponder.mouseDown = MouseDown;
-        mouseEventResponder.mouseDrag = MouseDrag;
-        mouseEventResponder.mouseUp = MouseUp;
+        transform.position = position;
     }
 
-    public void SetPosition(Vector3 position)
+    public void Show()
     {
-        cube.transform.position = position;
+        meshRenderer.enabled = true;
+        boxCollider.enabled = true;
     }
 
-    private void MouseDown()
+    public void Hide()
+    {
+        meshRenderer.enabled = false;
+        boxCollider.enabled = false;
+    }
+
+    public IEnumerator Highlight(float duration)
+    {
+        float time = 0f;
+        transform.position += Vector3.back;
+        meshRenderer.material.color = Color.red;
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+            yield return new WaitForEndOfFrame();
+        }
+        meshRenderer.material.color = Color.white;
+        transform.position -= Vector3.back;
+    }
+
+    public void SetText(string text)
+    {
+        this.text.text = text;
+    }
+
+    private void OnMouseDown()
     {
         if (OnStartDrag != null)
         {
-            Debug.Log(0);
             OnStartDrag();
         }
     }
 
-    private void MouseDrag()
-    {
-
-    }
-
-    private void MouseUp()
+    private void OnMouseUp()
     {
         if (OnStopDrag != null)
         {
             OnStopDrag();
         }
+    }
+
+    private void OnMouseEnter()
+    {
+        textRenderer.enabled = true;
+    }
+
+    private void OnMouseExit()
+    {
+        textRenderer.enabled = false;
     }
 }

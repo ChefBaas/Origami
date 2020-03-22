@@ -14,7 +14,7 @@ public class ModelFace
     public List<ModelVertex> vertices = new List<ModelVertex>();
     public List<ModelEdge> edges = new List<ModelEdge>();
 
-    private bool performingFold = false;
+    private ViewFace viewFace;
 
     [HideInInspector]
     public int number = -1;
@@ -22,12 +22,12 @@ public class ModelFace
     public ModelFace()
     {
         Paper.Instance.NewFace(this, out number);
+
+        viewFace = new ViewFace();
     }
 
     public ViewFace GetViewFace()
     {
-        ViewFace viewFace = new ViewFace();
-
         return viewFace;
     }
 
@@ -69,10 +69,18 @@ public class ModelFace
         }
     }
 
-    public void Flash()
+    public void Highlight(float duration)
     {
         // TODO: MAKE THIS WORK AGAIN
         //CoroutineStarter.Instance.StartCoroutine(ShowComponents());
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            vertices[i].Highlight(duration);
+        }
+        for (int i = 0; i < edges.Count; i++)
+        {
+            edges[i].Highlight(duration);
+        }
     }
 
     public void UpdateEdges()
@@ -88,29 +96,4 @@ public class ModelFace
             }
         }
     }
-
-    /*private IEnumerator ShowComponents()
-    {
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            vertices[i].GiveColor(Color.red);
-            vertices[i].MoveToFront();
-        }
-        for (int i = 0; i < edges.Count; i++)
-        {
-            edges[i].GiveColor(Color.red);
-            edges[i].UpdateLineRenderer(null);
-        }
-        yield return new WaitForSeconds(1f);
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            vertices[i].GiveColor(Color.white);
-            vertices[i].MoveToBack();
-        }
-        for (int i = 0; i < edges.Count; i++)
-        {
-            edges[i].GiveColor(Color.white);
-            edges[i].UpdateLineRenderer(null);
-        }
-    }*/
 }
