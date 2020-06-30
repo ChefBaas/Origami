@@ -15,15 +15,15 @@ public class ModelFace
     public List<ModelEdge> edges = new List<ModelEdge>();
 
     private ViewFace viewFace;
-
-    [HideInInspector]
+    
     public int number = -1;
 
-    public ModelFace()
+    public ModelFace(ViewFace viewFace)
     {
         Paper.Instance.NewFace(this, out number);
 
-        viewFace = new ViewFace();
+        //viewFace = new ViewFace();
+        this.viewFace = viewFace;
     }
 
     public ViewFace GetViewFace()

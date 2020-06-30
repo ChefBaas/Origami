@@ -75,7 +75,7 @@ public class FoldInformation
 
     public ModelEdge CreateNewEdge()
     {
-        newEdge = new ModelEdge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection);
+        newEdge = new ModelEdge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection, new ViewEdge());
         return newEdge;
     }
 }

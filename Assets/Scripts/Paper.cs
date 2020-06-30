@@ -145,7 +145,7 @@ public class Paper : MonoBehaviour
                     for (int i = 0; i < verticesToMove.Count; i++)
                     {
                         //verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
-                        verticesToMove[i].UpdatePosition(snappingGhosts[i].GetComponent<GhostVertex>().GetPosition());
+                        verticesToMove[i].UpdateModelPosition(snappingGhosts[i].GetComponent<GhostVertex>().GetPosition());
                     }
 
                     // Create new vertices
@@ -213,7 +213,7 @@ public class Paper : MonoBehaviour
                     for (int i = 0; i < facesInvolved.Count; i++)
                     {
                         Debug.Log(facesInvolved[i].Height);
-                        ModelFace face = new ModelFace();
+                        ModelFace face = new ModelFace(new ViewFace());
                         //Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
                         face.Height = facesInvolved[i].Height + heightIncrease;
                         for (int j = 0; j < verticesToMove.Count; j++)
@@ -532,14 +532,14 @@ public class Paper : MonoBehaviour
     private void SummonPaper()
     {
         //Face f1 = Instantiate(facePrefab, transform).GetComponent<Face>();
-        ModelFace f1 = new ModelFace();
+        ModelFace f1 = new ModelFace(new ViewFace());
         f1.Height = 0;
 
-        ModelVertex v1 = new ModelVertex(-Vector2.one * 3f);
-        ModelVertex v2 = new ModelVertex(new Vector3(3, -3, 0));
+        ModelVertex v1 = new ModelVertex(-Vector2.one * 3f, Instantiate(viewVertexPrefab, Vector3.zero, Quaternion.identity, transform).GetComponent<ViewVertex>());
+        ModelVertex v2 = new ModelVertex(new Vector3(3, -3, 0), Instantiate(viewVertexPrefab, Vector3.zero, Quaternion.identity, transform).GetComponent<ViewVertex>());
         //ModelVertex v3 = new ModelVertex(Vector2.zero);
-        ModelVertex v4 = new ModelVertex(new Vector3(-3, 3, 0));
-        ModelVertex v5 = new ModelVertex(Vector3.one * 3f);
+        ModelVertex v4 = new ModelVertex(new Vector3(-3, 3, 0), Instantiate(viewVertexPrefab, Vector3.zero, Quaternion.identity, transform).GetComponent<ViewVertex>());
+        ModelVertex v5 = new ModelVertex(Vector3.one * 3f, Instantiate(viewVertexPrefab, Vector3.zero, Quaternion.identity, transform).GetComponent<ViewVertex>());
 
         /*ModelVertex v1 = Instantiate(vertexPrefab, -Vector2.one * 3f, Quaternion.identity).GetComponent<ModelVertex>();
         ModelVertex v2 = Instantiate(vertexPrefab, new Vector3(3, -3, 0), Quaternion.identity).GetComponent<ModelVertex>();
@@ -547,10 +547,10 @@ public class Paper : MonoBehaviour
         ModelVertex v4 = Instantiate(vertexPrefab, new Vector3(-3, 3, 0), Quaternion.identity).GetComponent<ModelVertex>();
         ModelVertex v5 = Instantiate(vertexPrefab, Vector2.one * 3f, Quaternion.identity).GetComponent<ModelVertex>();*/
 
-        ModelEdge e1 = new ModelEdge(v2, v1);
-        ModelEdge e2 = new ModelEdge(v1, v4);
-        ModelEdge e3 = new ModelEdge(v4, v5);
-        ModelEdge e4 = new ModelEdge(v5, v2);
+        ModelEdge e1 = new ModelEdge(v2, v1, new ViewEdge());
+        ModelEdge e2 = new ModelEdge(v1, v4, new ViewEdge());
+        ModelEdge e3 = new ModelEdge(v4, v5, new ViewEdge());
+        ModelEdge e4 = new ModelEdge(v5, v2, new ViewEdge());
         /*Edge e5 = new Edge(v1, v3);
         Edge e6 = new Edge(v4, v3);
         Edge e7 = new Edge(v3, v5);

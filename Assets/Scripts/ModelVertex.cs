@@ -23,11 +23,13 @@ public class ModelVertex
     [HideInInspector]
     public int number = -1;
 
-    public ModelVertex(Vector3 position)
+    public ModelVertex(Vector3 position, ViewVertex viewVertex)
     {
         this.position = position;
 
-        viewVertex = GameObject.Instantiate(Paper.Instance.ViewVertexPrefab, position, Quaternion.identity, Paper.Instance.transform).GetComponent<ViewVertex>();
+        //viewVertex = GameObject.Instantiate(Paper.Instance.ViewVertexPrefab, position, Quaternion.identity, Paper.Instance.transform).GetComponent<ViewVertex>();
+        this.viewVertex = viewVertex;
+        viewVertex.SetPosition(position);
         viewVertex.OnStartDrag += OnStartFold;
         viewVertex.OnStopDrag += OnStopFold;
         
@@ -92,7 +94,7 @@ public class ModelVertex
         return position;
     }
 
-    public void UpdatePosition(Vector3 position)
+    public void UpdateModelPosition(Vector3 position)
     {
         this.position = position;
         viewVertex.SetPosition(position);

@@ -12,7 +12,7 @@ public class ModelEdge
 
     public int number;
 
-    public ModelEdge(ModelVertex v1, ModelVertex v2)
+    public ModelEdge(ModelVertex v1, ModelVertex v2, ViewEdge viewEdge)
     {
         Debug.LogFormat("Creating new edge between {0} and {1}", v1.number, v2.number);
 
@@ -22,7 +22,8 @@ public class ModelEdge
         v1.AddEdge(this);
         v2.AddEdge(this);
 
-        viewEdge = new ViewEdge();
+        //viewEdge = new ViewEdge();
+        this.viewEdge = viewEdge;
         UpdateViewEdge();
         linepiece = CalculateLinepieceValues();
 
@@ -73,7 +74,7 @@ public class ModelEdge
 
     public ViewEdge GetViewEdge()
     {
-        ViewEdge viewEdge = new ViewEdge();
+        //ViewEdge viewEdge = new ViewEdge();
 
         return viewEdge;
     }
