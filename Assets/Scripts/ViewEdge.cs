@@ -18,14 +18,19 @@ public class ViewEdge
         vectorLine.Draw3D();
     }
 
+    public void Destroy()
+    {
+        VectorLine.Destroy(ref vectorLine);
+    }
+
     public void Show()
     {
-        vectorLine.SetWidth(0f);
+        vectorLine.SetWidth(5f);
     }
 
     public void Hide()
     {
-        vectorLine.SetWidth(5f);
+        vectorLine.SetWidth(0f);
     }
 
     public IEnumerator Highlight(float duration)

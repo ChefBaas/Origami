@@ -14,8 +14,6 @@ public class ModelEdge
 
     public ModelEdge(ModelVertex v1, ModelVertex v2, ViewEdge viewEdge)
     {
-        Debug.LogFormat("Creating new edge between {0} and {1}", v1.number, v2.number);
-
         this.v1 = v1;
         this.v2 = v2;
 
@@ -24,7 +22,7 @@ public class ModelEdge
 
         //viewEdge = new ViewEdge();
         this.viewEdge = viewEdge;
-        UpdateViewEdge();
+        UpdateModelEdgePositions();
         linepiece = CalculateLinepieceValues();
 
         /*debugText = lineObject.AddComponent<TextMesh>();
@@ -32,6 +30,8 @@ public class ModelEdge
         debugText.characterSize = 0.2f;*/
 
         Paper.Instance.NewEdge(this, out number);
+
+        Debug.LogFormat("Creating new edge {0} between {1} and {2}", number, v1.number, v2.number);
     }
 
     public ModelVertex GetOther(ModelVertex v)
@@ -84,9 +84,14 @@ public class ModelEdge
         linepiece = CalculateLinepieceValues();
     }
 
-    public void UpdateViewEdge()
+    public void UpdateModelEdgePositions()
     {
         viewEdge.SetPositions(v1.GetModelPosition(), v2.GetModelPosition());
+    }
+
+    public void UpdateViewEdgePositions()
+    {
+        viewEdge.SetPositions(v1.GetViewPosition(), v2.GetViewPosition());
     }
 
     /*public void UpdateText()
@@ -111,7 +116,7 @@ public class ModelEdge
         v2.AddEdge(this);
 
         UpdateLinepiece();
-        UpdateViewEdge();
+        UpdateModelEdgePositions();
     }
 
     public Linepiece GetLinepiece()

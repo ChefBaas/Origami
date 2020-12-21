@@ -14,7 +14,7 @@ public class FoldInformation
         get => faceIntersection1;
     }
 
-    public ModelEdge newEdge;
+    public ModelEdge newModelEdge;
 
     public FoldInformation()
     {
@@ -32,14 +32,14 @@ public class FoldInformation
         if (faceIntersection0 == null)
         {
             faceIntersection0 = new FaceIntersection();
-            faceIntersection0.e = e;
+            faceIntersection0.modelEdge = e;
             faceIntersection0.intersection = intersection;
             return false;
         }
         else if (faceIntersection1 == null)
         {
             faceIntersection1 = new FaceIntersection();
-            faceIntersection1.e = e;
+            faceIntersection1.modelEdge = e;
             faceIntersection1.intersection = intersection;
             return true;
         }
@@ -50,19 +50,24 @@ public class FoldInformation
         }
     }
 
+    /// <summary>
+    /// Each involved face always has two intersections with the foldline
+    /// </summary>
+    /// <param name="v"></param>
+    /// <returns>Returns true if this foldInformation instance is complete; it needs to intersect with 2 edges. If something tries to add a third, an error is thrown</returns>
     public bool NewFaceIntersection(ModelVertex v)
     {
         if (faceIntersection0 == null)
         {
             faceIntersection0 = new FaceIntersection();
-            faceIntersection0.vertexAtIntersection = v;
+            faceIntersection0.modelVertexAtIntersection = v;
             faceIntersection0.makeNewStuff = false;
             return false;
         }
         else if (faceIntersection1 == null)
         {
             faceIntersection1 = new FaceIntersection();
-            faceIntersection1.vertexAtIntersection = v;
+            faceIntersection1.modelVertexAtIntersection = v;
             faceIntersection1.makeNewStuff = false;
             return true;
         }
@@ -73,9 +78,16 @@ public class FoldInformation
         }
     }
 
-    public ModelEdge CreateNewEdge()
+    public ModelEdge CreateNewModelEdge()
     {
-        newEdge = new ModelEdge(faceIntersection0.vertexAtIntersection, faceIntersection1.vertexAtIntersection, new ViewEdge());
-        return newEdge;
+        newModelEdge = new ModelEdge(faceIntersection0.modelVertexAtIntersection, faceIntersection1.modelVertexAtIntersection, new ViewEdge());
+        return newModelEdge;
+    }
+
+    public ViewEdge CreateNewViewEdge()
+    {
+        ViewEdge viewEdge = new ViewEdge();
+        viewEdge.SetPositions(faceIntersection0.intersection, FaceIntersection1.intersection);
+        return viewEdge;
     }
 }

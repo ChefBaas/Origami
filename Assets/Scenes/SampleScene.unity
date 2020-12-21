@@ -349,7 +349,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1602475285}
   - component: {fileID: 1602475284}
-  - component: {fileID: 1602475286}
   m_Layer: 0
   m_Name: Paper
   m_TagString: Untagged
@@ -369,15 +368,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 734f4387333dc5d45aa97e01e05aada1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  view: {fileID: 1602475286}
   lineMaterial: {fileID: 2100000, guid: af30c94bac20d0f48810327be8664431, type: 2}
   snappingGhostVertexPrefab: {fileID: 3601799049628198739, guid: 83c0bfaeda2f99d41955e5c9544fca7e,
     type: 3}
   supportGhostVertexPrefab: {fileID: 3601799049628198739, guid: dfa727baf2176be4f82ccf58098d1028,
     type: 3}
   viewVertexPrefab: {fileID: 3090103173676890558, guid: f14f1521e98bd54488f5770cb3fd40b4,
-    type: 3}
-  viewEdgePrefab: {fileID: 7648200229356765868, guid: 5473d1eede9b49b4b939a7088501de54,
     type: 3}
   debugMode: 0
 --- !u!4 &1602475285
@@ -394,15 +390,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1602475286
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1602475283}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed47b82efaa373e4ca26d90ed49ca3d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

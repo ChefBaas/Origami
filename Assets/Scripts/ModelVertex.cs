@@ -94,6 +94,11 @@ public class ModelVertex
         return position;
     }
 
+    public Vector3 GetViewPosition()
+    {
+        return viewVertex.transform.position;
+    }
+
     public void UpdateModelPosition(Vector3 position)
     {
         this.position = position;
@@ -101,18 +106,33 @@ public class ModelVertex
         for (int i = 0; i < edges.Count; i++)
         {
             edges[i].UpdateLinepiece();
-            edges[i].UpdateViewEdge();
+            edges[i].UpdateModelEdgePositions();
         }
+    }
+
+    public void UpdateViewPosition(Vector3 position)
+    {
+        viewVertex.SetPosition(position);
+        for (int i = 0; i < edges.Count; i++)
+        {
+            edges[i].UpdateViewEdgePositions();
+        }
+    }
+
+    public void ResetViewPosition()
+    {
+        UpdateViewPosition(position);
     }
 
     private void OnStartFold()
     {
-        CoroutineStarter.Instance.StartCoroutine(Paper.Instance.PerformFold(this));
+        //CoroutineStarter.Instance.StartCoroutine(Paper.Instance.PerformFold(this));
+        CoroutineStarter.Instance.StartCoroutine(Paper.Instance.PreviewFold(this));
     }
 
     private void OnStopFold()
     {
-        Paper.Instance.EndFold();
+        Paper.Instance.CompleteFold();
     }
 
     /*public void DetermineVertexState()

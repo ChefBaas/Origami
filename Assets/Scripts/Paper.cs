@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Vectrosity;
 
 public class Paper : MonoBehaviour
 {
@@ -10,8 +11,7 @@ public class Paper : MonoBehaviour
     {
         get => instance;
     }
-
-    [SerializeField] PaperView view;
+    
     [SerializeField] private Material lineMaterial;
     public Material LineMaterial
     {
@@ -36,7 +36,7 @@ public class Paper : MonoBehaviour
 
     [HideInInspector]
     public bool debugMode = false;
-    private bool performingFold = false;
+    private bool performingFold = false, foldSuccessful = true;
     private bool isFirstUpdate = true;
 
     private void Awake()
@@ -61,6 +61,11 @@ public class Paper : MonoBehaviour
         else
         {
             debugMode = false;
+        }
+
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            CancelFold();
         }
 
         if (Input.GetKeyUp(KeyCode.F))
@@ -88,6 +93,73 @@ public class Paper : MonoBehaviour
                 vertices[i].DetermineVertexState();
             }*/
         }
+    }
+
+    public IEnumerator PreviewFold(ModelVertex v)
+    {
+        performingFold = true;
+        Linepiece foldLine;
+
+        List<ModelVertex> verticesToMove = new List<ModelVertex>() { v };
+        List<ModelFace> facesInvolved = new List<ModelFace>() { faces[0] };
+        Dictionary<ModelFace, FoldInformation> foldInfo = new Dictionary<ModelFace, FoldInformation>();
+        List<ModelVertex> verticesOnFold = new List<ModelVertex>();
+
+        List<ViewVertex> newViewVertices = new List<ViewVertex>();
+        List<ViewEdge> newViewEdges = new List<ViewEdge>();
+
+        while (true)
+        {
+            Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) + Vector3.back * Camera.main.transform.position.z;
+
+            if ((Vector2.Distance(mouseWorldPosition, v.GetModelPosition()) > 0.5f))
+            {
+                // Move the view position of the vertex that's being dragged
+                v.UpdateViewPosition(Camera.main.ScreenToWorldPoint(Input.mousePosition) + Vector3.back * Camera.main.transform.position.z);
+
+                // Calculate the foldline
+                foldLine = GetFoldLine(v.GetModelPosition(), v.GetViewPosition());
+
+                // Find which vertices (roughly) lie on the foldline
+                // Those are also intersections, but do not require a new vertex
+                verticesOnFold = GetVerticesOnFold(foldLine);
+
+                // Find which vertices lie on the same side of the foldLine as v
+                // These, including v, are moving and will be mirrored in the foldLine
+                // Also record all faces that the movingVertices are a part of
+                verticesToMove.Clear();
+                facesInvolved.Clear();
+                FindVerticesToMove(foldLine, v, ref verticesToMove, ref facesInvolved);
+
+                // Find all intersections
+                foldInfo.Clear();
+                GetFoldInformation(foldLine, facesInvolved, ref foldInfo, verticesOnFold);
+                
+                UpdateView(foldInfo, newViewVertices, newViewEdges, verticesToMove, foldLine);
+
+                if (!performingFold)
+                {
+                    if (foldSuccessful)
+                    {
+                        // RESET VIEW, SAVE CURRENT MODEL (not doing this just yet), THEN UPDATE IT
+
+                        //v.UpdateModelPosition(Camera.main.ScreenToWorldPoint(Input.mousePosition) + Vector3.back * Camera.main.transform.position.z);
+
+                        ResetView(newViewVertices, newViewEdges);
+                        UpdateModel(verticesToMove, foldInfo, facesInvolved, foldLine);
+                    }
+                    else
+                    {
+                        // RESET VIEW
+                        ResetView(newViewVertices, newViewEdges);
+                    }
+
+                    break;
+                }
+
+            }
+            yield return new WaitForEndOfFrame();
+        }   
     }
 
     public IEnumerator PerformFold(ModelVertex v)
@@ -141,103 +213,8 @@ public class Paper : MonoBehaviour
                 // When the user releases the mouse button, calculate all the new stuff
                 if (!performingFold)
                 {
-                    // Mirror existing vertices
-                    for (int i = 0; i < verticesToMove.Count; i++)
-                    {
-                        //verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
-                        verticesToMove[i].UpdateModelPosition(snappingGhosts[i].GetComponent<GhostVertex>().GetPosition());
-                    }
-
-                    // Create new vertices
-                    List<ModelVertex> newVertices = new List<ModelVertex>();
-                    List<FaceIntersection> uniqueFaceIntersections = new List<FaceIntersection>();
-                    // For each FaceIntersection, check whether a vertex was created on its edge
-                    // If not, create one, if so, assign the already created vertex
-                    foreach (FoldInformation fi in foldInfo.Values)
-                    {
-                        //if (fi.FaceIntersection0 != null)
-                        if (fi.FaceIntersection0.makeNewStuff)
-                        {
-                            if (!uniqueFaceIntersections.Any(x => x.e == fi.FaceIntersection0.e))
-                            {
-                                uniqueFaceIntersections.Add(fi.FaceIntersection0);
-                                newVertices.Add(fi.FaceIntersection0.CreateNewVertex());
-                            }
-                            else
-                            {
-                                fi.FaceIntersection0.vertexAtIntersection = uniqueFaceIntersections.First(x => x.e == fi.FaceIntersection0.e).vertexAtIntersection;
-                            }
-                        }
-                        //if (fi.FaceIntersection1 != null)
-                        if (fi.FaceIntersection1.makeNewStuff)
-                        {
-                            if (!uniqueFaceIntersections.Any(x => x.e == fi.FaceIntersection1.e))
-                            {
-                                uniqueFaceIntersections.Add(fi.FaceIntersection1);
-                                newVertices.Add(fi.FaceIntersection1.CreateNewVertex());
-                            }
-                            else
-                            {
-                                fi.FaceIntersection1.vertexAtIntersection = uniqueFaceIntersections.First(x => x.e == fi.FaceIntersection1.e).vertexAtIntersection;
-                            }
-                        }
-                    }
-
-                    // For each intersected edge, two new ones are needed
-                    // Create a new one between the new vertex and the moved vertex of the intersected edges
-                    // Update the edge to be between the new vertex and the other (non-moved) vertex
-                    for (int i = 0; i < uniqueFaceIntersections.Count; i++)
-                    {
-                        if (uniqueFaceIntersections[i].makeNewStuff)
-                        {
-                            uniqueFaceIntersections[i].CreateNewEdge(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x)));
-                        }
-                    }
-                    for (int i = 0; i < uniqueFaceIntersections.Count; i++)
-                    {
-                        if (uniqueFaceIntersections[i].makeNewStuff)
-                        {
-                            // unreadable as fuck
-                            uniqueFaceIntersections[i].UpdateExistingEdge(uniqueFaceIntersections[i].e.GetOther(verticesToMove.First(x => uniqueFaceIntersections[i].e.HasVertex(x))));
-                        }
-                    }
-                    // Create a new edge along the foldline for each face that was involved
-                    foreach(FoldInformation fi in foldInfo.Values)
-                    {
-                        fi.CreateNewEdge();
-                    }
-
-                    // Finally, update the face information
-                    facesInvolved = facesInvolved.OrderByDescending(x => x.Height).ToList();
-                    int heightIncrease = 1;
-                    for (int i = 0; i < facesInvolved.Count; i++)
-                    {
-                        Debug.Log(facesInvolved[i].Height);
-                        ModelFace face = new ModelFace(new ViewFace());
-                        //Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
-                        face.Height = facesInvolved[i].Height + heightIncrease;
-                        for (int j = 0; j < verticesToMove.Count; j++)
-                        {
-                            if (facesInvolved[i].vertices.Contains(verticesToMove[j]))
-                            {
-                                face.AddVertex(verticesToMove[j]);
-                                //verticesToMove[j].transform.parent = face.transform;
-                                facesInvolved[i].RemoveVertex(verticesToMove[j]);
-                            }
-                        }
-                        facesInvolved[i].AddVertex(foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection);
-                        facesInvolved[i].AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection);
-                        face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection);
-                        face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection);
-                        //foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection.transform.parent = face.transform;
-                        //foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection.transform.parent = face.transform;
-
-                        facesInvolved[i].UpdateEdges();
-                        face.UpdateEdges();
-
-                        heightIncrease += 2;
-                    }
-
+                    UpdateModel(verticesToMove, foldInfo, facesInvolved, foldLine);
+                    
                     break;
                 }
             }
@@ -264,8 +241,16 @@ public class Paper : MonoBehaviour
         Destroy(lineRenderer.gameObject);
     }
 
-    public void EndFold()
+    public void CompleteFold()
     {
+        foldSuccessful = true;
+        performingFold = false;
+        foldSuccessful = true;
+    }
+
+    public void CancelFold()
+    {
+        foldSuccessful = false;
         performingFold = false;
     }
 
@@ -311,6 +296,229 @@ public class Paper : MonoBehaviour
         {
             number = -1;
             Debug.LogError("Tried to add new face, but was already in the list");
+        }
+    }
+
+    private void UpdateView(Dictionary<ModelFace, FoldInformation> foldInfo, List<ViewVertex> newViewVertices, List<ViewEdge> newViewEdges, List<ModelVertex> verticesToMove, Linepiece foldLine)
+    {
+        // Mirror moving vertices in the foldline
+        // Start at index 1, because vertex at index 0 is the vertex being moved by the mouse
+        for (int j = 1; j < verticesToMove.Count; j++)
+        {
+            verticesToMove[j].UpdateViewPosition(MathUtility.MirrorPointInLinepiece(foldLine, verticesToMove[j].GetModelPosition()));
+        }
+
+        // Create new viewvertices
+        int i = 0;
+        List<FaceIntersection> uniqueFaceIntersections = new List<FaceIntersection>();
+        foreach (FoldInformation fi in foldInfo.Values)
+        {
+            // Check whether a new vertex needs to be created
+            if (fi.FaceIntersection0.makeNewStuff)
+            {
+                if (!uniqueFaceIntersections.Any(x => x.modelEdge == fi.FaceIntersection0.modelEdge))
+                {
+                    uniqueFaceIntersections.Add(fi.FaceIntersection0);
+                    if (newViewVertices.Count <= i)
+                    {
+                        newViewVertices.Add(fi.FaceIntersection0.CreateNewViewVertex());
+                    }
+                    else
+                    {
+                        newViewVertices[i].SetPosition(fi.FaceIntersection0.intersection);
+                        fi.FaceIntersection0.viewVertexAtIntersection = newViewVertices[i];
+                    }
+                    i++;
+                }
+                else
+                {
+                    fi.FaceIntersection0.viewVertexAtIntersection = uniqueFaceIntersections.First(x => x.modelEdge == fi.FaceIntersection0.modelEdge).viewVertexAtIntersection;
+                }
+            }
+            // check whether a new vertex needs to be created
+            if (fi.FaceIntersection1.makeNewStuff)
+            {
+                if (!uniqueFaceIntersections.Any(x => x.modelEdge == fi.FaceIntersection1.modelEdge))
+                {
+                    uniqueFaceIntersections.Add(fi.FaceIntersection1);
+                    if (newViewVertices.Count <= i)
+                    {
+                        newViewVertices.Add(fi.FaceIntersection1.CreateNewViewVertex());
+                    }
+                    else
+                    {
+                        newViewVertices[i].SetPosition(fi.FaceIntersection1.intersection);
+                        fi.FaceIntersection1.viewVertexAtIntersection = newViewVertices[i];
+                    }
+                    i++;
+                }
+                else
+                {
+                    fi.FaceIntersection1.viewVertexAtIntersection = uniqueFaceIntersections.First(x => x.modelEdge == fi.FaceIntersection1.modelEdge).viewVertexAtIntersection;
+                }
+            }
+        }
+
+        // Create new viewedges
+
+        i = 0;
+        for (int j = 0; j < uniqueFaceIntersections.Count; j++)
+        {
+            if (uniqueFaceIntersections[j].makeNewStuff)
+            {
+                if (newViewEdges.Count <= i)
+                {
+                    newViewEdges.Add(uniqueFaceIntersections[j].CreateNewViewEdge(verticesToMove.First(x => uniqueFaceIntersections[j].modelEdge.HasVertex(x)).GetViewVertex()));
+                }
+                else
+                {
+                    newViewEdges[i].SetPositions(verticesToMove.First(x => uniqueFaceIntersections[j].modelEdge.HasVertex(x)).GetViewPosition(), uniqueFaceIntersections[j].intersection);
+                }
+                i++;
+            }
+        }
+
+        // Update existing viewedges
+        
+        for (int j = 0; j < uniqueFaceIntersections.Count; j++)
+        {
+            if (uniqueFaceIntersections[j].makeNewStuff)
+            {
+                uniqueFaceIntersections[j].UpdateExistingViewEdge(uniqueFaceIntersections[j].modelEdge.GetOther(verticesToMove.First(x => uniqueFaceIntersections[j].modelEdge.HasVertex(x))).GetViewVertex());
+            }
+        }
+        
+        foreach (FoldInformation fi in foldInfo.Values)
+        {
+            if (newViewEdges.Count <= i)
+            {
+                newViewEdges.Add(fi.CreateNewViewEdge());
+            }
+            else
+            {
+                newViewEdges[i].SetPositions(fi.FaceIntersection0.intersection, fi.FaceIntersection1.intersection);
+            }
+            i++;
+        }
+    }
+
+    private void ResetView(List<ViewVertex> newViewVertices, List<ViewEdge> newViewEdges)//, List<ViewFace> newViewFaces)
+    {
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            vertices[i].ResetViewPosition();
+        }
+
+        for (int i = newViewVertices.Count - 1; i > -1; i--)
+        {
+            Destroy(newViewVertices[i].gameObject);
+        }
+        for (int i = newViewEdges.Count - 1; i > -1; i--)
+        {
+            newViewEdges[i].Destroy();
+            newViewEdges[i] = null;
+        }
+        // do something with faces
+    }
+
+    private void UpdateModel(List<ModelVertex> verticesToMove, Dictionary<ModelFace, FoldInformation> foldInfo, List<ModelFace> facesInvolved, Linepiece foldLine)
+    {
+        // Mirror existing vertices
+        for (int i = 0; i < verticesToMove.Count; i++)
+        {
+            verticesToMove[i].UpdateModelPosition(MathUtility.MirrorPointInLinepiece(foldLine, verticesToMove[i].GetModelPosition()));
+            //verticesToMove[i].transform.position = snappingGhosts[i].GetComponent<GhostVertex>().GetPosition();
+            //verticesToMove[i].UpdateModelPosition(snappingGhosts[i].GetComponent<GhostVertex>().GetPosition());
+        }
+
+        // Create new vertices
+        List<ModelVertex> newVertices = new List<ModelVertex>();
+        List<FaceIntersection> uniqueFaceIntersections = new List<FaceIntersection>();
+        // For each FaceIntersection, check whether a vertex was created on its edge
+        // If not, create one, if so, assign the already created vertex
+        foreach (FoldInformation fi in foldInfo.Values)
+        {
+            //if (fi.FaceIntersection0 != null)
+            if (fi.FaceIntersection0.makeNewStuff)
+            {
+                if (!uniqueFaceIntersections.Any(x => x.modelEdge == fi.FaceIntersection0.modelEdge))
+                {
+                    uniqueFaceIntersections.Add(fi.FaceIntersection0);
+                    newVertices.Add(fi.FaceIntersection0.CreateNewModelVertex());
+                }
+                else
+                {
+                    fi.FaceIntersection0.modelVertexAtIntersection = uniqueFaceIntersections.First(x => x.modelEdge == fi.FaceIntersection0.modelEdge).modelVertexAtIntersection;
+                }
+            }
+            //if (fi.FaceIntersection1 != null)
+            if (fi.FaceIntersection1.makeNewStuff)
+            {
+                if (!uniqueFaceIntersections.Any(x => x.modelEdge == fi.FaceIntersection1.modelEdge))
+                {
+                    uniqueFaceIntersections.Add(fi.FaceIntersection1);
+                    newVertices.Add(fi.FaceIntersection1.CreateNewModelVertex());
+                }
+                else
+                {
+                    fi.FaceIntersection1.modelVertexAtIntersection = uniqueFaceIntersections.First(x => x.modelEdge == fi.FaceIntersection1.modelEdge).modelVertexAtIntersection;
+                }
+            }
+        }
+
+        // For each intersected edge, two new ones are needed
+        // Create a new one between the new vertex and the moved vertex of the intersected edges
+        // Update the edge to be between the new vertex and the other (non-moved) vertex
+        for (int i = 0; i < uniqueFaceIntersections.Count; i++)
+        {
+            if (uniqueFaceIntersections[i].makeNewStuff)
+            {
+                uniqueFaceIntersections[i].CreateNewModelEdge(verticesToMove.First(x => uniqueFaceIntersections[i].modelEdge.HasVertex(x)));
+            }
+        }
+        for (int i = 0; i < uniqueFaceIntersections.Count; i++)
+        {
+            if (uniqueFaceIntersections[i].makeNewStuff)
+            {
+                // unreadable as fuck
+                uniqueFaceIntersections[i].UpdateExistingEdge(uniqueFaceIntersections[i].modelEdge.GetOther(verticesToMove.First(x => uniqueFaceIntersections[i].modelEdge.HasVertex(x))));
+            }
+        }
+        // Create a new edge along the foldline for each face that was involved
+        foreach (FoldInformation fi in foldInfo.Values)
+        {
+            fi.CreateNewModelEdge();
+        }
+
+        // Finally, update the face information
+        facesInvolved = facesInvolved.OrderByDescending(x => x.Height).ToList();
+        int heightIncrease = 1;
+        for (int i = 0; i < facesInvolved.Count; i++)
+        {
+            Debug.Log(facesInvolved[i].Height);
+            ModelFace face = new ModelFace(new ViewFace());
+            //Face face = Instantiate(facePrefab, transform).GetComponent<Face>();
+            face.Height = facesInvolved[i].Height + heightIncrease;
+            for (int j = 0; j < verticesToMove.Count; j++)
+            {
+                if (facesInvolved[i].vertices.Contains(verticesToMove[j]))
+                {
+                    face.AddVertex(verticesToMove[j]);
+                    //verticesToMove[j].transform.parent = face.transform;
+                    facesInvolved[i].RemoveVertex(verticesToMove[j]);
+                }
+            }
+            facesInvolved[i].AddVertex(foldInfo[facesInvolved[i]].FaceIntersection0.modelVertexAtIntersection);
+            facesInvolved[i].AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.modelVertexAtIntersection);
+            face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection0.modelVertexAtIntersection);
+            face.AddVertex(foldInfo[facesInvolved[i]].FaceIntersection1.modelVertexAtIntersection);
+            //foldInfo[facesInvolved[i]].FaceIntersection0.vertexAtIntersection.transform.parent = face.transform;
+            //foldInfo[facesInvolved[i]].FaceIntersection1.vertexAtIntersection.transform.parent = face.transform;
+
+            facesInvolved[i].UpdateEdges();
+            face.UpdateEdges();
+
+            heightIncrease += 2;
         }
     }
 
@@ -410,6 +618,7 @@ public class Paper : MonoBehaviour
                     }
                     else
                     {
+                        Debug.Log("bla");
                         if (fi.NewFaceIntersection(vertexOnFold))
                         {
                             break;
@@ -500,14 +709,14 @@ public class Paper : MonoBehaviour
         {
             if (fi.FaceIntersection0 != null)
             {
-                if (!faceIntersections.Any(x => x.e == fi.FaceIntersection0.e))
+                if (!faceIntersections.Any(x => x.modelEdge == fi.FaceIntersection0.modelEdge))
                 {
                     faceIntersections.Add(fi.FaceIntersection0);
                 }
             }
             if (fi.FaceIntersection1 != null)
             {
-                if (!faceIntersections.Any(x => x.e == fi.FaceIntersection1.e))
+                if (!faceIntersections.Any(x => x.modelEdge == fi.FaceIntersection1.modelEdge))
                 {
                     faceIntersections.Add(fi.FaceIntersection1);
                 }
